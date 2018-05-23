@@ -310,8 +310,8 @@ app.post('/trade', async (req, res) => {
 
     // Get Minimum steps (trading intervals) for coins
     const stepsObj = await getBinanceSteps({
-      market1: sellCoinSymbol,
-      market2: buyCoinSymbol,
+      sellCoinMarket: sellCoinSymbol,
+      buyCoinMarket: buyCoinSymbol,
     });
     const buyCoinMinStep = stepsObj.buyCoin.minStep;
 

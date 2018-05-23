@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const server = axios.create({
-  baseURL: process.env.SERVER_URL,
+  baseURL: process.env.SERVER_URL || 'http://localhost:4001',
 });
 
 /**

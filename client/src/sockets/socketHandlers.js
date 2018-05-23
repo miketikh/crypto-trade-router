@@ -35,7 +35,6 @@ const receiveSellCoinOrderUpdates = (cb) => {
  */
 const receiveBuyCoinOrderUpdates = (cb) => {
   socket.on('updateBuyCoinInfo', (buyCoinInfo) => {
-    console.log(buyCoinInfo);
     cb(buyCoinInfo);
   });
 };

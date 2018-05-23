@@ -1,0 +1,35 @@
+html,
+body,
+.App {
+  height: 100%;
+}
+
+body {
+  background-color: #f5fbfa;
+  font-family: 'Roboto Mono';
+  margin-top: 20px;
+}
+
+.App {
+  text-align: center;
+  max-width: 850px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.app-title {
+  padding: 20px;
+  margin: 0;
+  color: #4c4646;
+}
+
+.glowing-border {
+  border: 2px solid #dadada;
+  border-radius: 7px;
+}
+
+.glowing-border:focus {
+  outline: none;
+  border-color: #9ecaed;
+  box-shadow: 0 0 10px #9ecaed;
+}

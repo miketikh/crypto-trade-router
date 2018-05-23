@@ -1,0 +1,44 @@
+.coin-select {
+  width: 150px;
+}
+
+.coin-selections {
+  background-color: #f5fbfa;
+  padding: 10px 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  border-radius: 7px;
+  font-weight: bold;
+}
+
+.trade-coin {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.sell-coin {
+  justify-content: flex-end;
+  padding-right: 10px;
+}
+
+.buy-coin {
+  justify-content: flex-start;
+  padding-left: 10px;
+}
+
+.smart-routing {
+  width: 100%;
+  padding: 10px 0;
+  color: rgb(49, 104, 54);
+}
+
+.coin-options,
+.coin-options * {
+  padding: 5px;
+}
+
+.coin-options {
+  height: 100px;
+}

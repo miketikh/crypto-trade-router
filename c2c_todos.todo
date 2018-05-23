@@ -1,0 +1,95 @@
+TODOS:
+
+  Name:
+    CryptoTradeRouter.com / io
+
+  Checklist:
+    ✔ Check binance signin using credentials from client @done (2018-5-19 15:00:44)
+    ✔ Try depth instead of depth cache @done (2018-5-19 14:50:34)
+    ✔ Styling @done (2018-5-19 17:48:33)
+    ✔ Coin2 sharesBuyable getting incorrect information on update, try tracing @done (2018-5-22 21:46:27)
+    ☐ addMinSteps returning blank in handleBaseSelect
+      ☐ Returning 0 for all minSteps @high
+    ☐ Git tracking not working! @critical
+    ☐ REMOVE KEYS FROM GIT - REBASE
+
+  BUGS:
+
+    APP.js:
+      ✔ First value selected doesn't change state, stays blank @done (2018-5-7 11:47:44)
+      ✔ Update Exchange to be dynamically entered @high @done (2018-5-21 10:40:06)
+      ✔ Unsubscribe when switching either option @done (2018-5-9 14:07:29)
+      ✔ Adjust 'baseInfo' when not available in USDT or baseCoin =` USDT! @critical @done (2018-5-21 10:39:57)
+      ✔ Refactor based on new coin format @done (2018-5-21 10:40:10)
+      ✔ Add subscriptions to baseHandler @done (2018-5-21 10:40:16)
+      ✔ Update deactiveChannels for binance @done (2018-5-23 10:36:28)
+      ☐ Socket.on events not holding scope - Occasionally getting wrong coin1name or symbol
+      ✔ Move socket listeners to componentdidmount @done (2018-5-23 10:36:21)
+      ✔ Move sharescalculation from componentdidmount! @done (2018-5-23 10:36:19)
+      ☐ selectBaseCoin, sharesBuyable being overwritten by getBinanceSocketOrders
+
+    Orders.js:
+      ✔ Clear orders when different coin selected. Possible to do in update? @done (2018-5-7 20:14:47)
+      ✔ Unsubscribe after update @done (2018-5-7 20:14:45)
+
+    Socket:
+      ✔ Get initial order data after subscribing @done (2018-5-7 20:15:13)
+    
+    OrderForm:
+      ✔ Can't use USDT as base, since basePrice is calculated by using history against USDT @done (2018-5-8 19:32:29)
+      ✔ Not updating baseCoin connections correctly (concat vs union) @done (2018-5-10 14:52:10)
+      ✔ Error for max order size @done (2018-5-10 15:30:59)
+      ✔ Handle leftover is more sold than available for purchase @done (2018-5-21 10:40:54)
+      ✔ If sharesPossibleToBuy = 0 or NaN, don't allow submission @done (2018-5-21 10:40:50)
+      ✔ Reset order information when stock changed @done (2018-5-14 20:46:51)
+
+  General:
+    ☐ Read article regarding numbers / floats precision in js
+    ☐ Factor commissions into estimated amounts @high
+    ✔ CORS! @critical @done (2018-5-15 16:25:17)
+    ✔ API call limit @high @done (2018-5-15 16:25:22)
+      ✔ Free limit - 2 per second, 5 excess burst slots (which free up again after 500 ms) @done (2018-5-15 16:25:24)
+    ☐ Sockets - determine cause of lag @critical 
+    ☐ Service workers for computation
+    ☐ Factor in fees
+      ☐ Remember using BNB receive 50% fee discount
+    ☐ If amountPossibleToBuy hits limit, limit shares sold
+    ☐ Breaks with no connection (cannot reduce pairs of null on initial call) @critical
+    ✔ change amountsellable to amountBuyable @done (2018-5-14 17:24:48)
+    ✔ Rename coin1 / coin2 to sellCoin / buyCoin @done (2018-5-21 12:33:15)
+    
+  Style: 
+    ☐ Inconsistent style. Sometimes use coin1Name = coin1, sometimes use coin1 = coin1OBj.name
+      ☐ Eventually rename coin1 to coin1Obj, and make coin1 = coin1Obj.name
+    ☐ Adjust amountBuyable when updating buyCoinInfo
+    ☐ replace coinSymbols array with coin objects
+    ☐ Debug handleBaseSelect
+    ☐ Ajax for coins/price
+
+
+  DNS:
+    ☐ Why needs mock in src for dependency?
+
+  Binance:
+    ☐ Check reconnect option @high
+      ☐ Change reconnect option based to false when value changes
+      ☐ Alert users if connections not updating @critical
+      ☐ Allow manual reconnect to all sockets when idle @high
+    ☐ Array function
+      Orderstreams getting object (easy to update) and converting to array for each calculation:
+        ☐ Possible to reduce size of array, or size of object depth fetched?
+    ☐ Use depth vs depthcache?
+    ☐ Currently stream updated anytime Bid / Ask changes anywhere in the book for stock
+
+Update static params:
+  ☐ client > src > sockets > websocket > endpoint
+  ✔ client > src > utils > axiosHandlers @done (2018-5-23 12:16:47)
+  ✔ server > sockets > coinigyAxios @done (2018-5-23 11:30:02)
+    ✔ Change client axios request to axios.create({ baseURL: '' }) @done (2018-5-23 12:16:46)
+  ✔ server > sockets > coinigySocket @done (2018-5-23 11:29:15)
+  ✔ server > binance.js @done (2018-5-23 11:27:43)
+    
+
+Server:
+  ☐ Format binance to take regular coin names
+  

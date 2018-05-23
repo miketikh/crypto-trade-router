@@ -1,0 +1,107 @@
+/* ******** ORDER FORM STYLING ******* */
+
+.bold {
+  font-weight: bold;
+}
+
+.order-form-header {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 10px;
+  flex-wrap: wrap;
+  font-size: large;
+  width: 100%;
+  border-bottom: 1px solid black;
+}
+
+.order-form-base-name {
+  padding-right: 10px;
+}
+
+.order-form-base-price {
+  padding-left: 10px;
+}
+
+.order-form-base-time {
+  width: 100%;
+  font-size: small;
+  padding: 5px;
+}
+
+/* *** CONTENT BUY / SELL COINS ***** */
+
+.order-form-content {
+  background-color: #f5fbfa;
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  border-radius: 20px;
+  margin-bottom: 15px;
+  padding: 10px;
+  outline: none;
+  border-color: #9ecaed;
+  box-shadow: 0 0 10px #9ecaed;
+}
+
+.order-form-ticker {
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  padding: 5px;
+  font-size: small;
+}
+
+.order-form-coin-header {
+  margin-top: 0px;
+  font-weight: normal;
+}
+
+.sell {
+  color: #e61d1d;
+}
+
+.buy {
+  color: rgb(49, 104, 54);
+}
+
+.ticker-currency {
+  width: 100%;
+  text-align: center;
+  font-weight: bold;
+  text-decoration: underline;
+  padding-bottom: 5px;
+}
+
+.order-form-coin {
+  flex: 1;
+  margin-top: 20px;
+  margin-bottom: 5px;
+}
+
+.coin-shares-container {
+  padding: 5px;
+}
+
+.order-form-sell {
+  border-right: 1px solid black;
+}
+
+/* **** SUBMIT BUTTON ****** */
+
+.order-form-submit {
+  padding: 5px;
+}
+
+.submit-trade-button {
+  padding: 10px 50px;
+  font-weight: bold;
+  border-radius: 5px;
+  border-color: #9ecaed;
+  box-shadow: 0 0 10px #9ecaed;
+}
+
+.submit-trade-button:hover {
+  background-color: #94b5f1;
+  box-shadow: 2px 2px 5px #9a6e6e;
+}

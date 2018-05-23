@@ -1,0 +1,59 @@
+/* ******** ORDER FORM STYLING ******* */
+h2 {
+  margin-bottom: 10px;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+.order-form {
+  background-color: rgb(232, 228, 225);
+}
+.order-form-header,
+.order-form-coin {
+  border: 1px solid black;
+}
+
+.order-form-ticker {
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  padding: 5px;
+  font-size: small;
+}
+
+.ticker-currency {
+  width: 100%;
+  text-align: center;
+  font-weight: bold;
+  text-decoration: underline;
+  padding-bottom: 5px;
+}
+
+.order-form-content {
+  display: flex;
+  width: 100%;
+}
+
+.order-form-coin {
+  flex: 1;
+}
+
+.order-form-submit {
+  border: 1px solid black;
+  padding: 10px;
+}
+
+.submit-trade-button {
+  padding: 5px 20px;
+  font-weight: bold;
+  border-radius: 5px;
+  box-shadow: 2px 2px 5px black;
+}
+
+.submit-trade-button:hover {
+  background-color: #94b5f1;
+  box-shadow: 2px 2px 5px #9a6e6e;
+}

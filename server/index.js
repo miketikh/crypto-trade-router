@@ -23,32 +23,9 @@ const {
   aggregateFilledTradesBinance,
 } = require('./binance');
 
+const { adjustBuyCoin, numberToFixed } = require('./utils/helpers');
+
 //* ********* CALCULATIONS THAT SHOULD GO SOMEWHERE *********
-
-/**
- * Calculates actual sharesBuyable and how much baseCoin will be leftover, after adjusting for minstep
- *  ex: If 1.58 shares buyable, but the minStep is 0, that means you can only buy 1 share and .58 shares * baseCoinPrice won't be used
- *
- * @param {object} buyCoin = Contains previous info for the buyCoin
- *
- * @return {object} adjustedBuyCoin = buyCoin with adjusted sharesBuyable, amountBuyable, and leftOver
- */
-const adjustBuyCoin = (buyCoin) => {
-  const { averageBuyPrice, minStep, amountBuyable } = buyCoin;
-
-  const sharesBuyable = amountBuyable / averageBuyPrice;
-  const unBuyableShares = sharesBuyable % minStep;
-  const actualSharesBuyable = sharesBuyable - unBuyableShares;
-  const actualAmountBuyable = amountBuyable - unBuyableShares * averageBuyPrice;
-  const leftOver = amountBuyable - actualAmountBuyable;
-
-  return {
-    ...buyCoin,
-    sharesBuyable: actualSharesBuyable,
-    amountBuyable: actualAmountBuyable,
-    leftOver,
-  };
-};
 
 // GET BEST ROUTE
 const getBestRoute = async ({
@@ -127,12 +104,12 @@ const getBestRoute = async ({
   bestRoute.buyCoin.minStep = minSteps.buyCoin.minStep;
 
   // Adjust buyCoin information on minStep, update in bestRoute
-  const adjustedBuyCoin = adjustBuyCoin(bestRouteWithMinSteps.buyCoin);
+  const adjustedBuyCoin = adjustBuyCoin(bestRoute.buyCoin);
 
   bestRoute.buyCoin = {
     ...bestRoute.buyCoin,
     ...adjustedBuyCoin,
-  }
+  };
 
   // Adds info for Worst Route, for comparison purposes
   const worstRoute = sortedRoutes[sortedRoutes.length - 1];
@@ -145,13 +122,6 @@ const getBestRoute = async ({
   };
 
   return bestRoute;
-};
-
-// ROUND NUMBER
-// Because .toString converts to a string
-const numberToFixed = (number, precision, base) => {
-  const pow = Math.pow(base || 10, precision);
-  return +(Math.round(number * pow) / pow);
 };
 
 // CALCULATE SAVINGS
@@ -179,7 +149,7 @@ const calculateUSDSavings = async ({ bestRoute }) => {
 
 const SERVER_SETTINGS = {
   loggedInUser: null,
-}
+};
 
 const app = express();
 const server = http.createServer(app);
@@ -355,7 +325,11 @@ app.post('/trade', async (req, res) => {
     // Buy BuyCoin
     const buyRes = await buyMarketBinance(buyCoinSymbol, quantityToBuy, flags);
 
-    const { price: buyPrice, qty: buyQuantity, commission: buyCommission } = aggregateFilledTradesBinance(buyRes.fills);
+    const {
+      price: buyPrice,
+      qty: buyQuantity,
+      commission: buyCommission,
+    } = aggregateFilledTradesBinance(buyRes.fills);
 
     const { commissionAsset: buyCommissionAsset, tradeId: buyTradeId } = buyRes.fills[0];
 

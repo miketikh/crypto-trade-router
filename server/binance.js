@@ -106,94 +106,6 @@ const getSocketOrdersBinance = async (symbol, cb) => {
   });
 };
 
-// CALCULATE SELL DATA
-// Calculates how many bids are in the book and what price you'd get
-const calculateSellData = ({ bids, shares }) => {
-  let sharesSellable = 0;
-  let sharesLeftToFill = shares;
-  let bidIndex = 0;
-  let saleTotal;
-  let averageSellPrice = 0;
-
-  bids = formatBinanceOrder(bids);
-
-  // Go through bids, take each order until shares filled or bids run out
-  while (sharesLeftToFill > 0) {
-    // Break loop if no more bids left to process
-    if (!bids[bidIndex]) {
-      break;
-    }
-
-    const { price, quantity: sharesAtPrice } = bids[bidIndex];
-    const sharesUsed = sharesAtPrice >= sharesLeftToFill ? sharesLeftToFill : sharesAtPrice;
-
-    sharesSellable += sharesUsed;
-    sharesLeftToFill -= sharesUsed;
-    averageSellPrice += sharesUsed * price;
-    bidIndex++;
-  }
-
-  // For some reason, rounding error on sharesSellable after equation
-  // Will fill all the shares, but sharesSellable still be off by .0000001 or something
-  if (sharesLeftToFill === 0) {
-    sharesSellable = shares;
-  }
-
-  // If max shares hit, returns shares toFixed decimal place so it doesn't keep adding .0001
-  // if (sharesSellable < sharesEntered) {
-  // }
-  averageSellPrice /= sharesSellable;
-  // If 0 shares entered, averageSellPrice = first Bid
-  if (!averageSellPrice) averageSellPrice = bids[0].price;
-  saleTotal = sharesSellable * averageSellPrice;
-  // Subtracts .1% commission from total
-  saleTotal -= saleTotal * 0.001;
-
-  // console.log(
-  //   `shares: ${shares}, sharesSellable: ${sharesSellable}, averageSellPrice: ${averageSellPrice}, saleTotal: ${saleTotal}`
-  // );
-
-  return { sharesSellable, averageSellPrice, saleTotal };
-};
-
-const calculateBuyData = ({ buyAmount, asks }) => {
-  let amountSpent = 0;
-  let amountLeftToSpend = buyAmount;
-  let sharesBuyable = 0;
-  let askIndex = 0;
-  let averageBuyPrice = 0.0;
-
-  while (amountLeftToSpend > 0) {
-    if (!asks[askIndex]) {
-      break;
-    }
-
-    const [price, quantity] = asks[askIndex];
-    const amountOfferedAtPrice = price * quantity;
-
-    // Purchases either the amount offered or whatever is left at current ask
-    const purchaseAtPrice =
-      amountLeftToSpend >= amountOfferedAtPrice ? amountOfferedAtPrice : amountLeftToSpend;
-
-    sharesBuyable += purchaseAtPrice / price;
-    amountSpent += purchaseAtPrice;
-    amountLeftToSpend -= purchaseAtPrice;
-    averageBuyPrice += purchaseAtPrice;
-    askIndex++;
-  }
-
-  averageBuyPrice /= sharesBuyable;
-  // Handles case with 0 shares
-  if (isNaN(averageBuyPrice)) {
-    averageBuyPrice = asks[0][0];
-  }
-
-  // Adds 1% commission to amount spent
-  amountSpent += amountSpent * 0.001;
-
-  return { amountSpent, sharesBuyable, averageBuyPrice };
-};
-
 // Calls ticker to get every symbol, splits them into pairs, returns pairs list
 const getPairsBinance = async () => {
   try {
@@ -353,8 +265,6 @@ module.exports = {
   getPriceBinance,
   getOrdersBinance,
   getSocketOrdersBinance,
-  calculateSellData,
-  calculateBuyData,
   buyMarketBinance: binance.marketBuyAsync,
   sellMarketBinance: binance.marketSellAsync,
   getMinStepsBinance,

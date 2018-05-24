@@ -37,7 +37,102 @@ const adjustBuyCoin = (buyCoin) => {
   };
 };
 
+/**
+ * Calculates sale information based on shares sold and Bid orders available
+ * @param {Object} Object with following params:
+ * @param {number} shares - Shares desired to sell
+ * @param {array} bids - Array of bids, format [[price, qty], []]
+ *
+ * @return {Object} Object with info: sharesSellable, averageSellPrice, saleTotal
+ */
+const calculateSellData = ({ shares, bids }) => {
+  let sharesSellable = 0;
+  let sharesLeftToFill = shares;
+  let bidIndex = 0;
+  let saleTotal;
+  let averageSellPrice = 0;
+
+  // Go through bids, take each order until shares filled or bids run out
+  while (sharesLeftToFill > 0) {
+    // Break loop if no more bids left to process
+    if (!bids[bidIndex]) {
+      break;
+    }
+
+    const [price, quantity] = bids[bidIndex];
+    const sharesUsed = quantity >= sharesLeftToFill ? sharesLeftToFill : quantity;
+
+    sharesSellable += sharesUsed;
+    sharesLeftToFill -= sharesUsed;
+    averageSellPrice += sharesUsed * price;
+    bidIndex++;
+  }
+
+  // Sometimes will fill all shares, but sharesSellable will show .0000001 or something
+  // Hacky fix:
+  if (sharesLeftToFill === 0) {
+    sharesSellable = shares;
+  }
+
+  averageSellPrice /= sharesSellable;
+  // If 0 shares entered, averageSellPrice = first Bid
+  if (!averageSellPrice) averageSellPrice = bids[0].price;
+  saleTotal = sharesSellable * averageSellPrice;
+  // Subtracts .1% commission from total
+  saleTotal -= saleTotal * 0.001;
+
+  return { sharesSellable, averageSellPrice, saleTotal };
+};
+
+/**
+ * Calculates purchase information using purchase amount and Ask orders available
+ * @param {Object} Object with following params:
+ * @param {number} buyAmount - Desired purchase amount (in baseCoin)
+ * @param {array} asks - Array of asks [[price, quantity], []]
+ *
+ * @return {Object} Object containing amountSpent, sharesBuyable, and averageBuyPrice
+ */
+const calculateBuyData = ({ buyAmount, asks }) => {
+  let amountSpent = 0;
+  let amountLeftToSpend = buyAmount;
+  let sharesBuyable = 0;
+  let askIndex = 0;
+  let averageBuyPrice = 0.0;
+
+  while (amountLeftToSpend > 0) {
+    if (!asks[askIndex]) {
+      break;
+    }
+
+    const [price, quantity] = asks[askIndex];
+    const amountOfferedAtPrice = price * quantity;
+
+    // Purchases either the amount offered or whatever is left at current ask
+    const purchaseAtPrice =
+      amountLeftToSpend >= amountOfferedAtPrice ? amountOfferedAtPrice : amountLeftToSpend;
+
+    sharesBuyable += purchaseAtPrice / price;
+    amountSpent += purchaseAtPrice;
+    amountLeftToSpend -= purchaseAtPrice;
+    averageBuyPrice += purchaseAtPrice;
+    askIndex++;
+  }
+
+  averageBuyPrice /= sharesBuyable;
+  // Handles case with 0 shares
+  if (isNaN(averageBuyPrice)) {
+    averageBuyPrice = asks[0][0];
+  }
+
+  // Adds 1% commission to amount spent
+  amountSpent += amountSpent * 0.001;
+
+  return { amountSpent, sharesBuyable, averageBuyPrice };
+};
+
 module.exports = {
-  adjustBuyCoin,
   numberToFixed,
+  adjustBuyCoin,
+  calculateSellData,
+  calculateBuyData,
 };

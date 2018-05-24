@@ -15,24 +15,35 @@ const {
   getPriceBinance,
   getOrdersBinance,
   getSocketOrdersBinance,
-  calculateSellData,
-  calculateBuyData,
   buyMarketBinance,
   sellMarketBinance,
   getMinStepsBinance,
   aggregateFilledTradesBinance,
 } = require('./binance');
 
-const { adjustBuyCoin, numberToFixed } = require('./utils/helpers');
+const {
+  numberToFixed,
+  adjustBuyCoin,
+  calculateSellData,
+  calculateBuyData,
+} = require('./utils/helpers');
 
 //* ********* CALCULATIONS THAT SHOULD GO SOMEWHERE *********
 
-// GET BEST ROUTE
+/**
+ * Calculates the best route between coins, return bestRoute object with various information
+ *  1. Maps over bridgeCoins, creates array of every possible route
+ *  2.
+ *
+ * @param {Object} Object containing the following params:
+ * @param {string} sellCoinName
+ * @param {string} buyCoinName
+ * @param {Object} bridgeCoins - array of coins connected to buyCoin and sellCoin
+ * @param {number} sharesEntered - Shares to use for the calculation
+ */
 const getBestRoute = async ({
   sellCoinName, buyCoinName, bridgeCoins, sharesEntered,
 }) => {
-  console.log('sharesEntered sent: ', sharesEntered);
-
   // Loops over bridgeCoins
   // For each baseCoin, gets orders for sellCoin / baseCoin and buyCoin / baseCoin
   // Lists highest ask and lowest bid, then chooses baseCoin with the best ratio

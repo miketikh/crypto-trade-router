@@ -25,14 +25,14 @@ const splitBinanceSymbol = (symbol) => {
 };
 
 // GET PRICE FOR COIN
-const getBinancePrice = async (symbol) => {
+const getPriceBinance = async (symbol) => {
   const priceObj = await binance.pricesAsync(symbol);
   return parseFloat(priceObj[symbol]);
 };
 
 // GET INITIAL PRICES
 // Returns object with prices for sellCoin, buyCoin, and baseCoin if not USDT
-const getBinancePrices = async ([sellCoinSymbol, buyCoinSymbol, baseCoinSymbol]) => {
+const getPricesBinance = async ([sellCoinSymbol, buyCoinSymbol, baseCoinSymbol]) => {
   const sellCoinPrice = await binance.pricesAsync(sellCoinSymbol);
   const buyCoinPrice = await binance.pricesAsync(buyCoinSymbol);
   // No symbol given if USDT used
@@ -73,7 +73,7 @@ const formatBinanceOrder = (orders) => {
 };
 
 // GET INITIAL BIDS / ASKS
-const getBinanceBidAsk = async ([sellCoinSymbol, buyCoinSymbol]) => {
+const getBidAskBinance = async ([sellCoinSymbol, buyCoinSymbol]) => {
   const sellCoinBidAsk = await binance.bookTickersAsync(sellCoinSymbol);
   const buyCoinBidAsk = await binance.bookTickersAsync(buyCoinSymbol);
 
@@ -84,7 +84,7 @@ const getBinanceBidAsk = async ([sellCoinSymbol, buyCoinSymbol]) => {
 };
 
 // GET ORDERS
-const getBinanceOrders = async (symbol) => {
+const getOrdersBinance = async (symbol) => {
   const depth = await binance.depthAsync(symbol);
   const bids = binance.array(binance.sortBids(depth.bids));
   const asks = binance.array(binance.sortAsks(depth.asks));
@@ -93,7 +93,7 @@ const getBinanceOrders = async (symbol) => {
 };
 
 // SUBSCRIBE TO ORDERS
-const getBinanceSocketOrders = async (symbol, cb) => {
+const getSocketOrdersBinance = async (symbol, cb) => {
   binance.websockets.depthCache(symbol, (symbol, depth) => {
     // const formattedOrders = formatOrders({ symbol, depth });
     // cb(formattedOrders);
@@ -195,7 +195,7 @@ const calculateBuyData = ({ buyAmount, asks }) => {
 };
 
 // Calls ticker to get every symbol, splits them into pairs, returns pairs list
-const getBinancePairs = async () => {
+const getPairsBinance = async () => {
   try {
     const ticker = await binance.pricesAsync();
     const pairs = [];
@@ -214,7 +214,7 @@ const getBinancePairs = async () => {
 
 // AGGREGATE FILL INFO
 // Uses trade fills array to calculate average price and total qty / commission
-const aggregateBinanceFills = (fills) => {
+const aggregateFilledTradesBinance = (fills) => {
   let price = 0;
   let qty = 0;
   let commission = 0;
@@ -313,7 +313,7 @@ const aggregateBinanceFills = (fills) => {
  *
  * @return {object} minSteps = Object with minStep defined for sellCoin and buyCoin
  */
-const getBinanceSteps = async ({ sellCoinMarket, buyCoinMarket }) => {
+const getMinStepsBinance = async ({ sellCoinMarket, buyCoinMarket }) => {
   try {
     const exchangeInfo = await binance.exchangeInfoAsync();
     const filterInfo = {
@@ -349,16 +349,16 @@ const getBinanceSteps = async ({ sellCoinMarket, buyCoinMarket }) => {
 
 module.exports = {
   binance,
-  getBinancePairs,
-  getBinancePrice,
-  getBinancePrices,
-  getBinanceBidAsk,
-  getBinanceOrders,
-  getBinanceSocketOrders,
+  getPairsBinance,
+  getPriceBinance,
+  getPricesBinance,
+  getBidAskBinance,
+  getOrdersBinance,
+  getSocketOrdersBinance,
   calculateSellData,
   calculateBuyData,
-  binanceBuyMarket: binance.marketBuyAsync,
-  binanceSellMarket: binance.marketSellAsync,
-  getBinanceSteps,
-  aggregateBinanceFills,
+  buyMarketBinance: binance.marketBuyAsync,
+  sellMarketBinance: binance.marketSellAsync,
+  getMinStepsBinance,
+  aggregateFilledTradesBinance,
 };

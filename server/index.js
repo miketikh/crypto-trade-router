@@ -6,29 +6,28 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const Promise = require('bluebird');
 const path = require('path');
-const moment = require('moment');
+const jwt = require('jsonwebtoken');
 
 const {
   binance,
-  getBinancePairs,
-  getBinancePrice,
-  getBinancePrices,
-  getBinanceBidAsk,
-  getBinanceOrders,
-  getBinanceSocketOrders,
+  getPairsBinance,
+  getPriceBinance,
+  getPricesBinance,
+  getBidAskBinance,
+  getOrdersBinance,
+  getSocketOrdersBinance,
   calculateSellData,
   calculateBuyData,
-  binanceBuyMarket,
-  binanceSellMarket,
-  getBinanceSteps,
-  aggregateBinanceFills,
+  buyMarketBinance,
+  sellMarketBinance,
+  getMinStepsBinance,
+  aggregateFilledTradesBinance,
 } = require('./binance');
 
 //* ********* CALCULATIONS THAT SHOULD GO SOMEWHERE *********
 
 /**
- * Adds Min Steps (minimum tradeable quantity) for binance
- *
+ * Adds Min Steps (minimum tradeable quantity) to buyCoin and sellCoin for binance
  * @param {object} coins = Object containing buyCoin and sellCoin
  *
  * @return {object} coinsUpdated = Object with buyCoin and sellCoin that have minSteps attached
@@ -36,7 +35,7 @@ const {
 const addBinanceMinSteps = async (coins) => {
   const { sellCoin, buyCoin } = coins;
 
-  const stepsObj = await getBinanceSteps({
+  const stepsObj = await getMinStepsBinance({
     sellCoinMarket: sellCoin.market,
     buyCoinMarket: buyCoin.market,
   });
@@ -94,8 +93,8 @@ const getBestRoute = async ({
     const buyCoinSymbol = `${buyCoinName}${baseCoin}`;
 
     // Get orders for each coin symbol
-    const getSellCoinOrders = getBinanceOrders(sellCoinSymbol);
-    const getBuyCoinOrders = getBinanceOrders(buyCoinSymbol);
+    const getSellCoinOrders = getOrdersBinance(sellCoinSymbol);
+    const getBuyCoinOrders = getOrdersBinance(buyCoinSymbol);
     const orders = await Promise.all([getSellCoinOrders, getBuyCoinOrders]);
 
     const sellCoinBids = orders[0].bids;
@@ -168,8 +167,6 @@ const getBestRoute = async ({
     averageBuyPrice: worstRoute.buyCoin.averageBuyPrice,
   };
 
-  console.log('sending adjusted best route with: ', adjustedBestRoute.sellCoin.sharesSellable);
-
   return adjustedBestRoute;
 };
 
@@ -191,9 +188,9 @@ const calculateUSDSavings = async ({ bestRoute }) => {
   const bestBaseCoinSymbol = `${bestBaseCoin}USDT`;
   const worstBaseCoinSymbol = `${worstBaseCoin}USDT`;
 
-  const bestCoinPriceUSD = bestBaseCoin === 'USDT' ? 1 : await getBinancePrice(bestBaseCoinSymbol);
+  const bestCoinPriceUSD = bestBaseCoin === 'USDT' ? 1 : await getPriceBinance(bestBaseCoinSymbol);
   const worstCoinPriceUSD =
-    worstBaseCoin === 'USDT' ? 1 : await getBinancePrice(worstBaseCoinSymbol);
+    worstBaseCoin === 'USDT' ? 1 : await getPriceBinance(worstBaseCoinSymbol);
 
   const bestSpreadUSD = bestSpread * bestCoinPriceUSD;
   const worstSpreadUSD = worstSpread * worstCoinPriceUSD;
@@ -203,6 +200,10 @@ const calculateUSDSavings = async ({ bestRoute }) => {
 
 // ***** END CALCULATIONS
 
+const SERVER_SETTINGS = {
+  loggedInUser: null,
+}
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server, { transport: ['websocket'] });
@@ -211,6 +212,41 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static(`${__dirname}/../client/build`));
+
+// // AUTHENTICATION MIDDLEWARE - Disable for local use
+// app.use((req, res, next) => {
+//   const { token } = req.params;
+//   const { loggedInUser } = SERVER_SETTINGS;
+
+//   try {
+//     const { id, login } = jwt.verify(token, process.env.JWT_SECRET)
+
+//     // Handle User Logout
+//     if (!login && id === loggedInUser) {
+//       SERVER_SETTINGS.loggedInUser = null;
+//       // Redirect to login
+//     }
+//     // Handle User Login
+//     if (login) {
+//         if (loggedInUser && loggedInUser === id) {
+//           // Already logged in!
+//           // When would this happen?
+//         } else if (loggedInUser && loggedInUser !== id) {
+//           // Someone else is logged In
+//           // Error
+//         } else {
+//           SERVER_SETTINGS.loggedInUser = id;
+//           // Fetch user info from db
+//           // Initialize binance with user info
+//           // Next
+//         }
+//     }
+
+//   } catch (err) {
+//     console.log('could not authenticate');
+//     //redirect to login
+//   }
+// })
 
 // GET BALANCE FOR COIN
 app.get('/balance/:coin', (req, res) => {
@@ -233,9 +269,9 @@ app.get('/balance/:coin', (req, res) => {
  */
 app.get('/coins/prices', (req, res) => {
   const { sellCoinSymbol, buyCoinSymbol, baseCoinSymbol } = req.query;
-  const sellCoinPromise = getBinancePrice(sellCoinSymbol);
-  const buyCoinPromise = getBinancePrice(buyCoinSymbol);
-  const baseCoinPromise = baseCoinSymbol !== 'USDTUSDT' ? getBinancePrice(baseCoinSymbol) : 1;
+  const sellCoinPromise = getPriceBinance(sellCoinSymbol);
+  const buyCoinPromise = getPriceBinance(buyCoinSymbol);
+  const baseCoinPromise = baseCoinSymbol !== 'USDTUSDT' ? getPriceBinance(baseCoinSymbol) : 1;
 
   Promise.all([sellCoinPromise, buyCoinPromise, baseCoinPromise]).then((prices) => {
     const [sellCoinLast, buyCoinLast, baseCoinLast] = prices;
@@ -248,7 +284,7 @@ app.get('/markets/:exchange', async (req, res) => {
   const { exchange } = req.params;
 
   if (exchange === 'binance') {
-    const pairs = await getBinancePairs();
+    const pairs = await getPairsBinance();
     res.send(pairs);
   } else {
     res.status(404).send();
@@ -260,7 +296,7 @@ app.get('/markets/:exchange', async (req, res) => {
 app.get('/coins/minsteps', async (req, res) => {
   const { sellCoinMarket, buyCoinMarket } = req.params;
 
-  const minSteps = await getBinanceSteps({
+  const minSteps = await getMinStepsBinance({
     sellCoinMarket,
     buyCoinMarket,
   });
@@ -309,14 +345,14 @@ app.post('/trade', async (req, res) => {
     }
 
     // Get Minimum steps (trading intervals) for coins
-    const stepsObj = await getBinanceSteps({
+    const stepsObj = await getMinStepsBinance({
       sellCoinMarket: sellCoinSymbol,
       buyCoinMarket: buyCoinSymbol,
     });
     const buyCoinMinStep = stepsObj.buyCoin.minStep;
 
     // Sell sellCoin
-    const sellRes = await binanceSellMarket(sellCoinSymbol, shares, flags);
+    const sellRes = await sellMarketBinance(sellCoinSymbol, shares, flags);
 
     // Sum up sale info to find purchase amount
 
@@ -325,7 +361,7 @@ app.post('/trade', async (req, res) => {
       price: sellPrice,
       qty: sellQuantity,
       commission: sellCommission,
-    } = aggregateBinanceFills(sellRes.fills);
+    } = aggregateFilledTradesBinance(sellRes.fills);
 
     // b. Uses commission asset to determine trade fee and total amount
     const { commissionAsset: sellCommissionAsset, tradeId: sellTradeId } = sellRes.fills[0];
@@ -340,9 +376,9 @@ app.post('/trade', async (req, res) => {
     const quantityToBuy = actualSharesBuyable;
 
     // Buy BuyCoin
-    const buyRes = await binanceBuyMarket(buyCoinSymbol, quantityToBuy, flags);
+    const buyRes = await buyMarketBinance(buyCoinSymbol, quantityToBuy, flags);
 
-    const { price: buyPrice, qty: buyQuantity, commission: buyCommission } = aggregateBinanceFills(buyRes.fills);
+    const { price: buyPrice, qty: buyQuantity, commission: buyCommission } = aggregateFilledTradesBinance(buyRes.fills);
 
     const { commissionAsset: buyCommissionAsset, tradeId: buyTradeId } = buyRes.fills[0];
 
@@ -418,7 +454,7 @@ io.on('connection', (socket) => {
   // // Initial Bid / Ask from ticker
   // // Takes array of coin symbols, returns object { symbol: bid: price, ask: price }
   // socket.on('getInitialBidAsk', async (symbols) => {
-  //   const bidAsk = await getBinanceBidAsk(symbols);
+  //   const bidAsk = await getBidAskBinance(symbols);
   //   io.sockets.emit('getInitialBidAsk', bidAsk);
   // });
 
@@ -441,7 +477,7 @@ io.on('connection', (socket) => {
        *
        * @returns {object}
        */
-      getBinanceSocketOrders(sellCoinSymbol, (sellCoinOrders) => {
+      getSocketOrdersBinance(sellCoinSymbol, (sellCoinOrders) => {
         const { bids, asks } = sellCoinOrders;
         const { sharesSellable, averageSellPrice, saleTotal } = calculateSellData({
           bids,
@@ -469,7 +505,7 @@ io.on('connection', (socket) => {
 
       // COIN_2 INFO (coin being bought)
       // Whenever buyCoin updated, uses saleTotal to calculate sharesToBuy
-      getBinanceSocketOrders(buyCoinSymbol, (buyCoinOrders) => {
+      getSocketOrdersBinance(buyCoinSymbol, (buyCoinOrders) => {
         const { bids, asks } = buyCoinOrders;
         const { amountSpent, sharesBuyable, averageBuyPrice } = calculateBuyData({
           asks,

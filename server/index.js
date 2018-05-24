@@ -1,5 +1,4 @@
 require('dotenv').config();
-
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
@@ -8,56 +7,26 @@ const bodyParser = require('body-parser');
 const Promise = require('bluebird');
 const path = require('path');
 const jwt = require('jsonwebtoken');
-
 const {
   binance,
   getPairsBinance,
   getPriceBinance,
-  getOrdersBinance,
   getSocketOrdersBinance,
   buyMarketBinance,
   sellMarketBinance,
   getMinStepsBinance,
   aggregateFilledTradesBinance,
 } = require('./binance/binance');
-
 const { getBestRoute } = require('./binance/bestRoute');
-
 const {
   numberToFixed,
   adjustBuyCoin,
   calculateSellData,
   calculateBuyData,
+  calculateUSDSavings,
 } = require('./utils/helpers');
 
-//* ********* CALCULATIONS THAT SHOULD GO SOMEWHERE *********
-
-// CALCULATE SAVINGS
-// Returns amount saved per share in USD
-const calculateUSDSavings = async ({ bestRoute }) => {
-  const { worstRoute } = bestRoute;
-  const bestBaseCoin = bestRoute.baseCoin.name;
-  const worstBaseCoin = worstRoute.baseCoin;
-  const bestSpread = bestRoute.sellCoin.averageSellPrice - bestRoute.buyCoin.averageBuyPrice;
-  const worstSpread = worstRoute.averageSellPrice - worstRoute.averageBuyPrice;
-  const bestBaseCoinSymbol = `${bestBaseCoin}USDT`;
-  const worstBaseCoinSymbol = `${worstBaseCoin}USDT`;
-
-  const bestCoinPriceUSD = bestBaseCoin === 'USDT' ? 1 : await getPriceBinance(bestBaseCoinSymbol);
-  const worstCoinPriceUSD =
-    worstBaseCoin === 'USDT' ? 1 : await getPriceBinance(worstBaseCoinSymbol);
-
-  const bestSpreadUSD = bestSpread * bestCoinPriceUSD;
-  const worstSpreadUSD = worstSpread * worstCoinPriceUSD;
-
-  return numberToFixed(bestSpreadUSD - worstSpreadUSD, 4);
-};
-
-// ***** END CALCULATIONS
-
-const SERVER_SETTINGS = {
-  loggedInUser: null,
-};
+// ****** Begin Server ******** //
 
 const app = express();
 const server = http.createServer(app);
@@ -67,6 +36,10 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static(`${__dirname}/../client/build`));
+
+const SERVER_SETTINGS = {
+  loggedInUser: null,
+};
 
 // // AUTHENTICATION MIDDLEWARE - Disable for local use
 // app.use((req, res, next) => {

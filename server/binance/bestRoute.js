@@ -71,6 +71,21 @@ const createPossibleRoutes = async ({
 };
 
 /**
+ * Sorts routes based on:
+ *  1. Liquidity: Number of shares possible to sell in the order book
+ *  2. Price: If books equally liquid, sorts by price / share
+ * @param {Object} routes - Contains possible routes for 2 coins
+ * 
+ * @return {Object} sortedRoutes - Routes sorted from best to worst
+ */
+const sortRoutes = routes => routes.sort((route1, route2) => {
+  if (route1.sellCoin.sharesSellable !== route2.sellCoin.sharesSellable) {
+    return route2.sellCoin.sharesSellable - route1.sellCoin.sharesSellable;
+  }
+  return route2.ratio - route1.ratio;
+});
+
+/**
  * Calculates the best route between coins, return relevant bestRoute information
  *  1. Maps over bridgeCoins, creates array of every possible route
  *  2. Sorts routes based on liquidity and price
@@ -100,15 +115,7 @@ const getBestRoute = async ({
     sharesEntered,
   });
 
-  // Sorts all routes based on which would be best
-  const sortedRoutes = routes.sort((route1, route2) => {
-    // First sort criteria: liquidity, or shares possible to sell
-    if (route1.sellCoin.sharesSellable !== route2.sellCoin.sharesSellable) {
-      return route2.sellCoin.sharesSellable - route1.sellCoin.sharesSellable;
-    }
-    // Second sort criteria: sellPrice / buyPrice
-    return route2.ratio - route1.ratio;
-  });
+  const sortedRoutes = sortRoutes(routes);
 
   const bestRoute = sortedRoutes[0];
 

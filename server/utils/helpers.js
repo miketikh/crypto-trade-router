@@ -1,3 +1,5 @@
+const { getPriceBinance } = require('../binance/binance');
+
 /**
  * Substitute for .toFixed, since that returns a string
  * @param {number} number - Floating point to round
@@ -130,9 +132,36 @@ const calculateBuyData = ({ buyAmount, asks }) => {
   return { amountSpent, sharesBuyable, averageBuyPrice };
 };
 
+/**
+ * Converts savings in bestRoute into a USD amount
+ *  // NOTE: Uses Binance API for prices
+ * @param {Object} bestRoute object, also containing worstRoute info
+ *
+ * @return {number} Amount saved from the smartRouter
+ */
+const calculateUSDSavings = async ({ bestRoute }) => {
+  const { worstRoute } = bestRoute;
+  const bestBaseCoin = bestRoute.baseCoin.name;
+  const worstBaseCoin = worstRoute.baseCoin;
+  const bestSpread = bestRoute.sellCoin.averageSellPrice - bestRoute.buyCoin.averageBuyPrice;
+  const worstSpread = worstRoute.averageSellPrice - worstRoute.averageBuyPrice;
+  const bestBaseCoinSymbol = `${bestBaseCoin}USDT`;
+  const worstBaseCoinSymbol = `${worstBaseCoin}USDT`;
+
+  const bestCoinPriceUSD = bestBaseCoin === 'USDT' ? 1 : await getPriceBinance(bestBaseCoinSymbol);
+  const worstCoinPriceUSD =
+    worstBaseCoin === 'USDT' ? 1 : await getPriceBinance(worstBaseCoinSymbol);
+
+  const bestSpreadUSD = bestSpread * bestCoinPriceUSD;
+  const worstSpreadUSD = worstSpread * worstCoinPriceUSD;
+
+  return numberToFixed(bestSpreadUSD - worstSpreadUSD, 4);
+};
+
 module.exports = {
   numberToFixed,
   adjustBuyCoin,
   calculateSellData,
   calculateBuyData,
+  calculateUSDSavings,
 };

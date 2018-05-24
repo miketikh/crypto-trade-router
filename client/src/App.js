@@ -21,6 +21,7 @@ import {
   addMinSteps,
   getCoinBalance,
   getLastPrices,
+  submitTrade,
 } from './utils/axiosHandlers';
 import { findPrecision, mapSellCoinConnections } from './utils/helpers';
 import './App.css';
@@ -467,59 +468,56 @@ class App extends Component {
   };
 
   // SUBMIT TRADE HANDLER
-  handleTradeSubmit = (e) => {
+  handleTradeSubmit = async () => {
     const {
       sellCoin, buyCoin, sharesEntered, bridgeCoins, smartRouting, baseCoin,
     } = this.state;
 
-    axios
-      .post('http://localhost:4001/trade', {
+    try {
+      const { data: tradeRes } = await submitTrade({
         sellCoin,
         buyCoin,
-        shares: sharesEntered,
+        sharesEntered,
         bridgeCoins,
         smartRouting,
-      })
-      .then((res) => {
-        const { data: tradeRes } = res;
-        let tradeLogEntry;
-        // Log the trade savings, if smartRouting used
-        if (smartRouting) {
-          tradeLogEntry = (
-            <LogEntry
-              sellCoin={sellCoin}
-              buyCoin={buyCoin}
-              sharesEntered={sharesEntered}
-              tradeRes={tradeRes}
-              key={tradeRes.sale.tradeId}
-            />
-          );
-        } else {
-          const { purchase, sale } = tradeRes;
-          tradeLogEntry = (
-            <li>
-              You sold {sale.quantity} {sellCoin.name} at {sale.price} {baseCoin.name} and bought{' '}
-              {purchase.quantity} {buyCoin.name} at {purchase.price} {baseCoin.name}
-            </li>
-          );
-        }
-
-        this.setState({
-          tradeLog: [...this.state.tradeLog, tradeLogEntry],
-        });
-        this.updateCoinBalances({
-          sellCoinName: sellCoin.name,
-          buyCoinName: buyCoin.name,
-        });
-      })
-      .catch((err) => {
-        console.log('Error occurred submitting trade: ', err);
-        // Even if error occurs, may need to update one balance
-        this.updateCoinBalances({
-          sellCoinName: sellCoin.name,
-          buyCoinName: buyCoin.name,
-        });
       });
+      let tradeLogEntry;
+      // Log the trade savings, if smartRouting used
+      if (smartRouting) {
+        tradeLogEntry = (
+          <LogEntry
+            sellCoin={sellCoin}
+            buyCoin={buyCoin}
+            sharesEntered={sharesEntered}
+            tradeRes={tradeRes}
+            key={tradeRes.sale.tradeId}
+          />
+        );
+      } else {
+        const { purchase, sale } = tradeRes;
+        tradeLogEntry = (
+          <li>
+            You sold {sale.quantity} {sellCoin.name} at {sale.price} {baseCoin.name} and bought{' '}
+            {purchase.quantity} {buyCoin.name} at {purchase.price} {baseCoin.name}
+          </li>
+        );
+      }
+
+      this.setState({
+        tradeLog: [...this.state.tradeLog, tradeLogEntry],
+      });
+      this.updateCoinBalances({
+        sellCoinName: sellCoin.name,
+        buyCoinName: buyCoin.name,
+      });
+    } catch (err) {
+      console.log('Error occurred submitting trade: ', err);
+      // Even if error occurs, may need to update one balance
+      this.updateCoinBalances({
+        sellCoinName: sellCoin.name,
+        buyCoinName: buyCoin.name,
+      });
+    }
   };
 
   render() {

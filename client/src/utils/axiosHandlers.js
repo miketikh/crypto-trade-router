@@ -106,4 +106,26 @@ const getLastPrices = ({ sellCoinSymbol, buyCoinSymbol, baseCoinSymbol }, cb) =>
     });
 };
 
-export { mapCoinConnections, addMinSteps, getCoinBalance, getLastPrices };
+/**
+ * Submit trade to server
+ * @param {Object} Object containing the following params:
+ * @param {Object} sellCoin
+ * @param {Object} buyCoin
+ * @param {number} sharesEntered
+ * @param {array} bridgeCoins
+ * @param {boolean} smartRouting
+ *
+ * @return axios response object, tradeInfo in .data
+ */
+const submitTrade = ({
+  sellCoin, buyCoin, sharesEntered, bridgeCoins, smartRouting,
+}) =>
+  server.post('/trade', {
+    sellCoin,
+    buyCoin,
+    shares: sharesEntered,
+    bridgeCoins,
+    smartRouting,
+  });
+
+export { mapCoinConnections, addMinSteps, getCoinBalance, getLastPrices, submitTrade };

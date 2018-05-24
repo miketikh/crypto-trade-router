@@ -26,33 +26,6 @@ const {
 //* ********* CALCULATIONS THAT SHOULD GO SOMEWHERE *********
 
 /**
- * Adds Min Steps (minimum tradeable quantity) to buyCoin and sellCoin for binance
- * @param {object} coins = Object containing buyCoin and sellCoin
- *
- * @return {object} coinsUpdated = Object with buyCoin and sellCoin that have minSteps attached
- */
-const addBinanceMinSteps = async (coins) => {
-  const { sellCoin, buyCoin } = coins;
-
-  const stepsObj = await getMinStepsBinance({
-    sellCoinMarket: sellCoin.market,
-    buyCoinMarket: buyCoin.market,
-  });
-
-  return {
-    ...coins,
-    sellCoin: {
-      ...coins.sellCoin,
-      ...stepsObj.sellCoin,
-    },
-    buyCoin: {
-      ...coins.buyCoin,
-      ...stepsObj.buyCoin,
-    },
-  };
-};
-
-/**
  * Calculates actual sharesBuyable and how much baseCoin will be leftover, after adjusting for minstep
  *  ex: If 1.58 shares buyable, but the minStep is 0, that means you can only buy 1 share and .58 shares * baseCoinPrice won't be used
  *
@@ -144,29 +117,34 @@ const getBestRoute = async ({
 
   const bestRoute = sortedRoutes[0];
 
-  // Adds min steps to bestRoute, updates buyCoin based on min steps
-  const bestRouteWithMinSteps = await addBinanceMinSteps(bestRoute);
+  // Adds min steps to bestRoute coins
+  const minSteps = await getMinStepsBinance({
+    sellCoinMarket: bestRoute.sellCoin.market,
+    buyCoinMarket: bestRoute.buyCoin.market,
+  });
+
+  bestRoute.sellCoin.minStep = minSteps.sellCoin.minStep;
+  bestRoute.buyCoin.minStep = minSteps.buyCoin.minStep;
+
+  // Adjust buyCoin information on minStep, update in bestRoute
   const adjustedBuyCoin = adjustBuyCoin(bestRouteWithMinSteps.buyCoin);
 
-  const adjustedBestRoute = {
-    ...bestRouteWithMinSteps,
-    buyCoin: {
-      ...bestRouteWithMinSteps.buyCoin,
-      ...adjustedBuyCoin,
-    },
-  };
+  bestRoute.buyCoin = {
+    ...bestRoute.buyCoin,
+    ...adjustedBuyCoin,
+  }
 
   // Adds info for Worst Route, for comparison purposes
   const worstRoute = sortedRoutes[sortedRoutes.length - 1];
 
-  adjustedBestRoute.worstRoute = {
+  bestRoute.worstRoute = {
     sharesBuyable: worstRoute.buyCoin.sharesBuyable,
     baseCoin: worstRoute.baseCoin.name,
     averageSellPrice: worstRoute.sellCoin.averageSellPrice,
     averageBuyPrice: worstRoute.buyCoin.averageBuyPrice,
   };
 
-  return adjustedBestRoute;
+  return bestRoute;
 };
 
 // ROUND NUMBER

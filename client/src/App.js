@@ -450,7 +450,6 @@ class App extends Component {
     const maxPrecision = findPrecision(minStep);
     sharesNumber = sharesNumber.toFixed(maxPrecision);
 
-    console.log('shares updated, ', sharesNumber);
     socket.emit('sharesUpdated', sharesNumber);
     this.setState({
       sharesEntered: sharesNumber,
@@ -464,12 +463,6 @@ class App extends Component {
         bridgeCoins,
         sharesEntered: sharesNumber,
       });
-      // socket.emit('getBestRoute', {
-      //   sellCoinName: sellCoin.name,
-      //   buyCoinName: buyCoin.name,
-      //   bridgeCoins,
-      //   sharesEntered: sharesNumber,
-      // });
     }
   };
 

@@ -31,15 +31,21 @@ const {
 //* ********* CALCULATIONS THAT SHOULD GO SOMEWHERE *********
 
 /**
- * Calculates the best route between coins, return bestRoute object with various information
+ * Calculates the best route between coins, return relevant bestRoute information
  *  1. Maps over bridgeCoins, creates array of every possible route
- *  2.
+ *  2. Sorts routes based on liquidity and price
+ *  3. Adds minStep to coins
+ *  4. Adjusts buyCoin based on minSteps
+ *  5. Calculates and adds info for WorstRoute for comparison
+ *  6. Returns object with sellCoin, buyCoin, and worstRoute
  *
  * @param {Object} Object containing the following params:
  * @param {string} sellCoinName
  * @param {string} buyCoinName
  * @param {Object} bridgeCoins - array of coins connected to buyCoin and sellCoin
  * @param {number} sharesEntered - Shares to use for the calculation
+ *
+ * @return {Object} bestRoute object containing sellCoin, buyCoin, and worstRoute objects
  */
 const getBestRoute = async ({
   sellCoinName, buyCoinName, bridgeCoins, sharesEntered,

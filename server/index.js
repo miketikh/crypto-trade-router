@@ -1,4 +1,5 @@
 require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
@@ -12,8 +13,6 @@ const {
   binance,
   getPairsBinance,
   getPriceBinance,
-  getPricesBinance,
-  getBidAskBinance,
   getOrdersBinance,
   getSocketOrdersBinance,
   calculateSellData,

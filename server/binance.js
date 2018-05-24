@@ -351,8 +351,6 @@ module.exports = {
   binance,
   getPairsBinance,
   getPriceBinance,
-  getPricesBinance,
-  getBidAskBinance,
   getOrdersBinance,
   getSocketOrdersBinance,
   calculateSellData,

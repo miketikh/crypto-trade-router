@@ -35,12 +35,10 @@
   display: flex;
   flex-wrap: wrap;
   width: 100%;
-  border-radius: 20px;
   margin-bottom: 15px;
   padding: 10px;
   outline: none;
-  border-color: #9ecaed;
-  box-shadow: 0 0 10px #9ecaed;
+  box-shadow: 0 0 10px #9ba0a5;
 }
 
 .order-form-ticker {

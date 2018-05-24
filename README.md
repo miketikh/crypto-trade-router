@@ -44,7 +44,7 @@ Currently the router is integrated with **binance.** Looking to add more exchang
 3.  In terminal:
 
 * `cd` into root, run `npm install`
-* run `npm run serve`
+* run `npm run start`
 
 4.  Open a browser, navigate to localhost:4001
 5.  Use the app

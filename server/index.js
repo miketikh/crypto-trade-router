@@ -37,45 +37,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static(`${__dirname}/../client/build`));
 
-const SERVER_SETTINGS = {
-  loggedInUser: null,
-};
-
-// // AUTHENTICATION MIDDLEWARE - Disable for local use
-// app.use((req, res, next) => {
-//   const { token } = req.params;
-//   const { loggedInUser } = SERVER_SETTINGS;
-
-//   try {
-//     const { id, login } = jwt.verify(token, process.env.JWT_SECRET)
-
-//     // Handle User Logout
-//     if (!login && id === loggedInUser) {
-//       SERVER_SETTINGS.loggedInUser = null;
-//       // Redirect to login
-//     }
-//     // Handle User Login
-//     if (login) {
-//         if (loggedInUser && loggedInUser === id) {
-//           // Already logged in!
-//           // When would this happen?
-//         } else if (loggedInUser && loggedInUser !== id) {
-//           // Someone else is logged In
-//           // Error
-//         } else {
-//           SERVER_SETTINGS.loggedInUser = id;
-//           // Fetch user info from db
-//           // Initialize binance with user info
-//           // Next
-//         }
-//     }
-
-//   } catch (err) {
-//     console.log('could not authenticate');
-//     //redirect to login
-//   }
-// })
-
 // GET BALANCE FOR COIN
 app.get('/balance/:coin', (req, res) => {
   const { coin } = req.params;

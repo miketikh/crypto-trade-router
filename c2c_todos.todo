@@ -8,10 +8,11 @@ TODOS:
     ✔ Try depth instead of depth cache @done (2018-5-19 14:50:34)
     ✔ Styling @done (2018-5-19 17:48:33)
     ✔ Coin2 sharesBuyable getting incorrect information on update, try tracing @done (2018-5-22 21:46:27)
-    ☐ addMinSteps returning blank in handleBaseSelect
-      ☐ Returning 0 for all minSteps @high
-    ☐ Git tracking not working! @critical
-    ☐ REMOVE KEYS FROM GIT - REBASE
+    ✔ addMinSteps returning blank in handleBaseSelect @done (2018-5-24 15:02:11)
+      ✔ Returning 0 for all minSteps @high @done (2018-5-24 15:02:11)
+    ✔ Git tracking not working! @critical @done (2018-5-24 15:02:07)
+    ☐ Configure client side to process .env keys
+      ☐ How to do with create react app?
 
   BUGS:
 

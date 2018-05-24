@@ -19,7 +19,9 @@ const {
   sellMarketBinance,
   getMinStepsBinance,
   aggregateFilledTradesBinance,
-} = require('./binance');
+} = require('./binance/binance');
+
+const { getBestRoute } = require('./binance/bestRoute');
 
 const {
   numberToFixed,
@@ -29,117 +31,6 @@ const {
 } = require('./utils/helpers');
 
 //* ********* CALCULATIONS THAT SHOULD GO SOMEWHERE *********
-
-/**
- * Calculates the best route between coins, return relevant bestRoute information
- *  1. Maps over bridgeCoins, creates array of every possible route
- *  2. Sorts routes based on liquidity and price
- *  3. Adds minStep to coins
- *  4. Adjusts buyCoin based on minSteps
- *  5. Calculates and adds info for WorstRoute for comparison
- *  6. Returns object with sellCoin, buyCoin, and worstRoute
- *
- * @param {Object} Object containing the following params:
- * @param {string} sellCoinName
- * @param {string} buyCoinName
- * @param {Object} bridgeCoins - array of coins connected to buyCoin and sellCoin
- * @param {number} sharesEntered - Shares to use for the calculation
- *
- * @return {Object} bestRoute object containing sellCoin, buyCoin, and worstRoute objects
- */
-const getBestRoute = async ({
-  sellCoinName, buyCoinName, bridgeCoins, sharesEntered,
-}) => {
-  // Loops over bridgeCoins
-  // For each baseCoin, gets orders for sellCoin / baseCoin and buyCoin / baseCoin
-  // Lists highest ask and lowest bid, then chooses baseCoin with the best ratio
-  const possibleRoutes = await Promise.map(bridgeCoins, async (baseCoin) => {
-    // Create sellCoin and buyCoin symbols for each baseCoin
-    const sellCoinSymbol = `${sellCoinName}${baseCoin}`;
-    const buyCoinSymbol = `${buyCoinName}${baseCoin}`;
-
-    // Get orders for each coin symbol
-    const getSellCoinOrders = getOrdersBinance(sellCoinSymbol);
-    const getBuyCoinOrders = getOrdersBinance(buyCoinSymbol);
-    const orders = await Promise.all([getSellCoinOrders, getBuyCoinOrders]);
-
-    const sellCoinBids = orders[0].bids;
-    const buyCoinAsks = orders[1].asks;
-
-    // Calculate buy / sell data based on sellCoin bids and buyCoin asks
-    const { sharesSellable, averageSellPrice, saleTotal } = calculateSellData({
-      bids: sellCoinBids,
-      shares: sharesEntered,
-    });
-
-    const { amountSpent, sharesPossibleToBuy, averageBuyPrice } = calculateBuyData({
-      asks: buyCoinAsks,
-      buyAmount: saleTotal,
-    });
-
-    const ratio = averageSellPrice / averageBuyPrice;
-
-    return {
-      sellCoin: {
-        market: sellCoinSymbol,
-        averageSellPrice,
-        sharesSellable,
-      },
-      buyCoin: {
-        market: buyCoinSymbol,
-        amountBuyable: amountSpent,
-        sharesBuyable: sharesPossibleToBuy,
-        averageBuyPrice,
-      },
-      baseCoin: {
-        name: baseCoin,
-        market: `${baseCoin}USDT`,
-      },
-      ratio,
-    };
-  });
-
-  // Sorts all routes based on which would be best
-  const sortedRoutes = possibleRoutes.sort((route1, route2) => {
-    // First sort criteria: liquidity, or shares possible to sell
-    if (route1.sellCoin.sharesSellable !== route2.sellCoin.sharesSellable) {
-      return route2.sellCoin.sharesSellable - route1.sellCoin.sharesSellable;
-    }
-    // Second sort criteria: sellPrice / buyPrice
-    return route2.ratio - route1.ratio;
-  });
-
-  const bestRoute = sortedRoutes[0];
-
-  // Adds min steps to bestRoute coins
-  const minSteps = await getMinStepsBinance({
-    sellCoinMarket: bestRoute.sellCoin.market,
-    buyCoinMarket: bestRoute.buyCoin.market,
-  });
-
-  bestRoute.sellCoin.minStep = minSteps.sellCoin.minStep;
-  bestRoute.buyCoin.minStep = minSteps.buyCoin.minStep;
-
-  // Adjust buyCoin information on minStep, update in bestRoute
-  const adjustedBuyCoin = adjustBuyCoin(bestRoute.buyCoin);
-
-  bestRoute.buyCoin = {
-    ...bestRoute.buyCoin,
-    ...adjustedBuyCoin,
-  };
-
-  // Adds info for Worst Route, for comparison purposes
-  const worstRoute = sortedRoutes[sortedRoutes.length - 1];
-
-  bestRoute.worstRoute = {
-    sharesBuyable: worstRoute.buyCoin.sharesBuyable,
-    baseCoin: worstRoute.baseCoin.name,
-    averageSellPrice: worstRoute.sellCoin.averageSellPrice,
-    averageBuyPrice: worstRoute.buyCoin.averageBuyPrice,
-  };
-
-  return bestRoute;
-};
 
 // CALCULATE SAVINGS
 // Returns amount saved per share in USD

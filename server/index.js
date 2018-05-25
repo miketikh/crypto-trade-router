@@ -37,7 +37,30 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static(`${__dirname}/../client/build`));
 
-// GET BALANCE FOR COIN
+/* ========== SERVER ROUTES ===========
+ * GET /
+ *  - Returns homepage
+ * GET /balance/:coin
+ *  - Returns balance available in Binance
+ * GET /coins/prices
+ *  - Returns prices for buyCoin, sellCoin, and baseCoin
+ * GET /markets/:exchange
+ *  - Returns all pairs, currently :exchange must be binance
+ * GET /coins/minsteps
+ *  - Returns minSteps (minimum trading quantity) for buyCoin and sellCoin
+ * POST /trade
+ *  - Makes a trade using given info, returns trade information
+ * ====================================
+ */
+
+// GET HOMEPAGE
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/build/index.html'), (err) => {
+    console.log('error', err);
+  });
+});
+
+// GET COIN BALANCE
 app.get('/balance/:coin', (req, res) => {
   const { coin } = req.params;
 
@@ -68,7 +91,7 @@ app.get('/coins/prices', (req, res) => {
   });
 });
 
-// GET ALL AVAILABLE MARKETS FOR EXCHANGE
+// GET ALL PAIRS FOR EXCHANGE
 app.get('/markets/:exchange', async (req, res) => {
   const { exchange } = req.params;
 
@@ -91,13 +114,6 @@ app.get('/coins/minsteps', async (req, res) => {
   });
 
   res.send(minSteps);
-});
-
-// GET HOMEPAGE
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/build/index.html'), (err) => {
-    console.log('error', err);
-  });
 });
 
 // TRADE COINS
@@ -227,6 +243,23 @@ app.post('/trade', async (req, res) => {
     res.status(404).end(err);
   }
 });
+
+/* =============== SOCKETS ==============
+ * ON getBestRoute
+ *  - getBestRoute for given coins
+ *  - EMIT getBestRoute
+ * ON subscribeToOrders
+ *  -  Subscribe buyCoin and sellCoin to order book updates
+ *  - EMIT 'updateBuyCoinInfo' and 'updateSellCoinInfo' on respective updates
+ * ON sharesUpdate
+ *  - Update SHARES_FOR_ORDER_UPDATES variable used for server calculations
+ * ON subscribeToTrades
+ *  - Subscribe coins to trade updates
+ *  - On any update, EMIT updateLast
+ * ON terminatePriorSockets
+ *  - Close all current socket connections
+ * =======================================
+ */
 
 io.on('connection', (socket) => {
   console.log('New client connected');

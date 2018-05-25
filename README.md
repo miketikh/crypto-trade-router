@@ -23,15 +23,6 @@ This process is **horribly inefficient** for a number of reasons!
 1.  **Time:** Buy the time you find a connection, sell a coin, and buy the next one, the prices may have changed. Especially if news came out.
 2.  **Efficiency:** What if there are many possible base coins? For example, **NEO** and **LTC** both trade against **BTC, ETH, BNB, and USDT.** Each one has different prices and amounts you can trade! How do you determine the best route?
 
-  <img src="images/ada_eos_btc.jpg" height=200px width=400px>
-  <p><i>On Binance: Both ADA and EOS trade against BTC...
-  </i></p>
-
-  <img src="images/ada_eos_bnb.jpg" height=200px width=400px>
-  <p><i>But ADA trades against BNB, while EOS does not.</br>
-    How do you quickly choose a base? Which is best?
-  </i></p>
-
 ### The Solution:
 
 **Crypto Trade Router** attempts to solve these problems!

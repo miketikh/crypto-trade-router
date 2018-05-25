@@ -22,16 +22,15 @@ This process is **horribly inefficient** for a number of reasons!
 
 1.  **Time:** Buy the time you find a connection, sell a coin, and buy the next one, the prices may have changed. Especially if news came out.
 2.  **Efficiency:** What if there are many possible base coins? For example, **NEO** and **LTC** both trade against **BTC, ETH, BNB, and USDT.** Each one has different prices and amounts you can trade! How do you determine the best route?
-    <figure>
-      <img src="images/ada_eos_btc.jpg" height=200px width=400px>
-      <figcaption>On Binance: Both ADA and EOS trade against BTC...</figcaption>
-    </figure>
-    <figure>
-      <img src="images/ada_eos_bnb.jpg" height=200px width=400px>
-      <figcaption>But ADA trades against BNB, while EOS does not.</br>
-        How do you quickly choose a base? Which is best?
-      </figcaption>
-    </figure>
+
+  <img src="images/ada_eos_btc.jpg" height=200px width=400px>
+  <p><i>On Binance: Both ADA and EOS trade against BTC...
+  </i></p>
+
+  <img src="images/ada_eos_bnb.jpg" height=200px width=400px>
+  <p><i>But ADA trades against BNB, while EOS does not.</br>
+    How do you quickly choose a base? Which is best?
+  </i></p>
 
 ### The Solution:
 
@@ -43,26 +42,20 @@ Crypto trade router:
 2.  Maps out any other alt coin it can be connected to
 3.  If there are multiple baseCoins they can both trade against, uses **smartRouting** to choose the best route to trade (based on price and liquidity).
 
-<figure>
   <img src="images/ctr_selection.png" height=200px width=400px>
-  <figcaption>Using the trade router, you can choose from all base coins</br>
-  Or select "smart routing" and let it choose the best one
-  </figcaption>
-</figure>
+  <p><i>Using the trade router, you can choose from all base coins</br>
+    Or select "smart routing" and let it choose the best one
+  </i></p>
 
-<figure>
   <img src="images/ctr_main.png" height=200px width=400px>
-  <figcaption>Makes relevant information accessible at a glance:
+  <p><i>Makes relevant information accessible at a glance:
   </br>Last price of both coins in USD and Base
   </br>Purchase and sale information for coins in Base and USD
-  </figcaption>
-</figure>
+  </i></p>
 
-<figure>
-  <img src="misc/ctr_outcome.png" height=200px width=400px>
-  <figcaption>Provides feedback on the routing and outcome
-  </figcaption>
-</figure>
+  <img src="images/ctr_outcome.png" height=200px width=400px>
+  <p><i>Provides feedback on the routing and outcome</i>
+  </p>
 
 It's designed to optimize for time and price on every crypto trade!
 

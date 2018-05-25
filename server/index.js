@@ -116,8 +116,24 @@ app.get('/coins/minsteps', async (req, res) => {
   res.send(minSteps);
 });
 
-// TRADE COINS
-// TODO: Authentication for trade? Allow trades based on shares or amount
+/**
+ * POST /Trade - Trades Coins
+ *  1. Gets coin symbols to trade (sell market, buy market)
+ *    a. If smartRouting enabled, recalculates best route before trading
+ *    b. If not, gets info from the request
+ *  2. Sell sellCoin market
+ *  3. Process sale
+ *    a. Aggregate the sell data to get sale information
+ *    b. Adjust sale amount for binance commission
+ *  4. Calculate quantity to buy based on amount sold and buyCoin's minStep
+ *  5. Buy buyCoin market
+ *  6. Process purchase
+ *    a. Aggregate Buy fill information
+ *    b. Adjust fill information for commission
+ *  7. Calculate savings (if smartRouting used)
+ *  8. Put all trade information into object, send response
+ *  
+ */
 app.post('/trade', async (req, res) => {
   const {
     sellCoin, buyCoin, shares, bridgeCoins, smartRouting,
@@ -125,11 +141,11 @@ app.post('/trade', async (req, res) => {
   const flags = { type: 'MARKET', newOrderRespType: 'FULL' };
 
   try {
-    let sellCoinSymbol,
-      buyCoinSymbol,
-      averageBuyPrice,
-      sharesBuyable,
-      bestRoute;
+    let sellCoinSymbol;
+    let buyCoinSymbol;
+    let averageBuyPrice;
+    let sharesBuyable;
+    let bestRoute;
 
     // If smartRouting is enabled, recalculate the best routes before making the trade
     if (smartRouting) {
@@ -148,13 +164,6 @@ app.post('/trade', async (req, res) => {
       ({ market: sellCoinSymbol } = sellCoin);
       ({ market: buyCoinSymbol, averageBuyPrice, sharesBuyable } = buyCoin);
     }
-
-    // Get Minimum steps (trading intervals) for coins
-    const stepsObj = await getMinStepsBinance({
-      sellCoinMarket: sellCoinSymbol,
-      buyCoinMarket: buyCoinSymbol,
-    });
-    const buyCoinMinStep = stepsObj.buyCoin.minStep;
 
     // Sell sellCoin
     const sellRes = await sellMarketBinance(sellCoinSymbol, shares, flags);
@@ -176,7 +185,7 @@ app.post('/trade', async (req, res) => {
     const sellTotal = sellAmount - sellAmount * sellCommissionDecimal;
 
     // c. Adjusts sharesBuyable based on minStep
-    const unBuyableShares = sharesBuyable % buyCoinMinStep;
+    const unBuyableShares = sharesBuyable % buyCoin.minStep;
     const actualSharesBuyable = sharesBuyable - unBuyableShares;
     const quantityToBuy = actualSharesBuyable;
 

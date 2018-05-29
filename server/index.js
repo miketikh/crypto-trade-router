@@ -6,7 +6,6 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const Promise = require('bluebird');
 const path = require('path');
-const jwt = require('jsonwebtoken');
 const {
   binance,
   getPairsBinance,
@@ -53,14 +52,22 @@ app.use(express.static(`${__dirname}/../client/build`));
  * ====================================
  */
 
-// GET HOMEPAGE
+/**
+ * GET / - Homepage
+ */
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/build/index.html'), (err) => {
     console.log('error', err);
   });
 });
 
-// GET COIN BALANCE
+/**
+ * GET /balance/:coin - Return coin's balance
+ * @param {Object} req param object with:
+ * @param {string} coin - Name of coin
+ *
+ * @return {number} Balance - Account balance of coin at binance
+ */
 app.get('/balance/:coin', (req, res) => {
   const { coin } = req.params;
 
@@ -74,10 +81,13 @@ app.get('/balance/:coin', (req, res) => {
 });
 
 /**
- * Get last prices for sellCoin, buyCoin, and baseCoin
- * @param {Object} query - req.query containing sellCoinSymbol, buyCoinSymbol, and baseCoinSymbol
+ * GET /coins/prices - Gets last prices for sellCoin, buyCoin, and baseCoin
+ * @param {Object} req query containing:
+ * @param {string} sellCoinSymbol
+ * @param {string} buyCoinSymbole
+ * @param {string} baseCoinSymbol
  *
- * @return {object} lastPrices - Object of with sellCoinLast, buyCoinLast, and baseCoinLast and numerical last prices
+ * @return {object} lastPrices - Object with sellCoinLast, buyCoinLast, and baseCoinLast and numerical last prices
  */
 app.get('/coins/prices', (req, res) => {
   const { sellCoinSymbol, buyCoinSymbol, baseCoinSymbol } = req.query;
@@ -91,7 +101,13 @@ app.get('/coins/prices', (req, res) => {
   });
 });
 
-// GET ALL PAIRS FOR EXCHANGE
+/**
+ * GET /markets/:exchange - Gets all markets in exchange
+ * @param {Object} req with params object containing:
+ * @param {string} exchange - name of exchange (currently only binance)
+ *
+ * @return {array} pairs - Array containing arrays of every coin pair [ ['eth', 'btc'], [...] ]
+ */
 app.get('/markets/:exchange', async (req, res) => {
   const { exchange } = req.params;
 
@@ -103,8 +119,14 @@ app.get('/markets/:exchange', async (req, res) => {
   }
 });
 
-// GET COIN MINIMUM STEPS
-// Takes two symbols, sends back { sellCoin: { minStep }, buyCoin: {...} }
+/**
+ * GET /coins/minsteps - Gets minStep (minimum trading size) for sellCoin and buyCoin
+ * @param {object} req params object with:
+ * @param {string} sellCoinMarket
+ * @param {string} buyCoinMarket
+ *
+ * @return {object} minSteps - { sellCoin: { minStep }, buyCoin: { minStep} }
+ */
 app.get('/coins/minsteps', async (req, res) => {
   const { sellCoinMarket, buyCoinMarket } = req.params;
 
@@ -132,7 +154,7 @@ app.get('/coins/minsteps', async (req, res) => {
  *    b. Adjust fill information for commission
  *  7. Calculate savings (if smartRouting used)
  *  8. Put all trade information into object, send response
- *  
+ *
  */
 app.post('/trade', async (req, res) => {
   const {

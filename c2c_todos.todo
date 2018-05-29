@@ -11,8 +11,7 @@ TODOS:
     ✔ addMinSteps returning blank in handleBaseSelect @done (2018-5-24 15:02:11)
       ✔ Returning 0 for all minSteps @high @done (2018-5-24 15:02:11)
     ✔ Git tracking not working! @critical @done (2018-5-24 15:02:07)
-    ☐ Configure client side to process .env keys
-      ☐ How to do with create react app?
+    ☐ Add try/catch to all server routes
 
   BUGS:
 

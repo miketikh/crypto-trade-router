@@ -29,7 +29,6 @@ const {
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server, { transport: ['websocket'] });
 
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -62,7 +61,8 @@ app.get('/', (req, res) => {
 });
 
 /**
- * GET /balance/:coin - Return coin's balance
+ * GET /balance/:coin
+ *  Return coin's balance
  * @param {Object} req param object with:
  * @param {string} coin - Name of coin
  *
@@ -81,7 +81,8 @@ app.get('/balance/:coin', (req, res) => {
 });
 
 /**
- * GET /coins/prices - Gets last prices for sellCoin, buyCoin, and baseCoin
+ * GET /coins/prices
+ *  Gets last prices for sellCoin, buyCoin, and baseCoin
  * @param {Object} req query containing:
  * @param {string} sellCoinSymbol
  * @param {string} buyCoinSymbole
@@ -102,7 +103,8 @@ app.get('/coins/prices', (req, res) => {
 });
 
 /**
- * GET /markets/:exchange - Gets all markets in exchange
+ * GET /markets/:exchange
+ *  Gets all markets in exchange
  * @param {Object} req with params object containing:
  * @param {string} exchange - name of exchange (currently only binance)
  *
@@ -120,7 +122,8 @@ app.get('/markets/:exchange', async (req, res) => {
 });
 
 /**
- * GET /coins/minsteps - Gets minStep (minimum trading size) for sellCoin and buyCoin
+ * GET /coins/minsteps
+ *  Gets minStep (minimum trading size) for sellCoin and buyCoin
  * @param {object} req params object with:
  * @param {string} sellCoinMarket
  * @param {string} buyCoinMarket
@@ -139,7 +142,8 @@ app.get('/coins/minsteps', async (req, res) => {
 });
 
 /**
- * POST /Trade - Trades Coins
+ * POST /trade
+ *  Trades Coins
  *  1. Gets coin symbols to trade (sell market, buy market)
  *    a. If smartRouting enabled, recalculates best route before trading
  *    b. If not, gets info from the request
@@ -165,7 +169,6 @@ app.post('/trade', async (req, res) => {
   try {
     let sellCoinSymbol;
     let buyCoinSymbol;
-    let averageBuyPrice;
     let sharesBuyable;
     let bestRoute;
 
@@ -180,11 +183,11 @@ app.post('/trade', async (req, res) => {
 
       // Get coin info from best route
       ({ market: sellCoinSymbol } = bestRoute.sellCoin);
-      ({ market: buyCoinSymbol, averageBuyPrice, sharesBuyable } = bestRoute.buyCoin);
-      // If no smartRouting, use provided routes
+      ({ market: buyCoinSymbol, sharesBuyable } = bestRoute.buyCoin);
     } else {
+      // If no smartRouting, use provided routes
       ({ market: sellCoinSymbol } = sellCoin);
-      ({ market: buyCoinSymbol, averageBuyPrice, sharesBuyable } = buyCoin);
+      ({ market: buyCoinSymbol, sharesBuyable } = buyCoin);
     }
 
     // Sell sellCoin
@@ -240,6 +243,7 @@ app.post('/trade', async (req, res) => {
       };
     }
 
+    // Creates Sale and Purchase objects with trade information
     const sale = {
       market: sellRes.symbol,
       price: sellPrice,
@@ -283,7 +287,7 @@ app.post('/trade', async (req, res) => {
  *  -  Subscribe buyCoin and sellCoin to order book updates
  *  - EMIT 'updateBuyCoinInfo' and 'updateSellCoinInfo' on respective updates
  * ON sharesUpdate
- *  - Update SHARES_FOR_ORDER_UPDATES variable used for server calculations
+ *  - Update SOCKET_VARIABLES.shares variable used for server calculations
  * ON subscribeToTrades
  *  - Subscribe coins to trade updates
  *  - On any update, EMIT updateLast
@@ -295,7 +299,23 @@ app.post('/trade', async (req, res) => {
 io.on('connection', (socket) => {
   console.log('New client connected');
 
-  // GETS BEST ROUTE
+  const SOCKET_VARIABLES = {
+    // Stores sharesEntered from client to use for price calculations
+    shares: 0,
+    // Amount received from selling. Recalculated each time sale order book changes
+    saleProceeds: 0,
+  };
+
+  /**
+   * SOCKET - Gets Best Route, sends back to client
+   * @param {Object} Object containing:
+   * @param {string} sellCoinName
+   * @param {string} buyCoinName
+   * @param {array} bridgeCoins - baseCoins that connect sellCoin and buyCoin
+   * @param {number} sharesEntered
+   *
+   * @return {Object} object with best route information
+   */
   socket.on('getBestRoute', async ({
     sellCoinName, buyCoinName, bridgeCoins, sharesEntered,
   }) => {
@@ -308,42 +328,34 @@ io.on('connection', (socket) => {
     socket.emit('getBestRoute', bestRoute);
   });
 
-  // // Initial Bid / Ask from ticker
-  // // Takes array of coin symbols, returns object { symbol: bid: price, ask: price }
-  // socket.on('getInitialBidAsk', async (symbols) => {
-  //   const bidAsk = await getBidAskBinance(symbols);
-  //   io.sockets.emit('getInitialBidAsk', bidAsk);
-  // });
-
-  // SHARES - create closure?
-  let SHARES_FOR_ORDER_UPDATES = 0;
-
-  // Subscribe to Orders
+  /**
+   * SOCKET - Subscribe to order book changes for sellCoin and buyCoin
+   * @param {Object} - sellCoin containing market
+   * @param {Object} - buyCoin containing market
+   */
   socket.on('subscribeToOrders', async ({ sellCoin, buyCoin }) => {
     const { market: sellCoinSymbol } = sellCoin;
     const { market: buyCoinSymbol } = buyCoin;
-    let saleProceeds = 0;
 
     try {
       /**
-       * Subscribe to Sell Coin (sellCoin) order updates
+       * SOCKET - Subscribe to Sell Coin (sellCoin) updates
        *   When sellCoin order book changes, recalculates the sale information (shares possible, price, total)
        *   Also gets the newest bid / ask info, sends both to client
-       *
        * @param {string} sellCoinSymbol - Market of sellCoin (coin being sold). ex: 'ETCBTC'
        *
-       * @returns {object}
+       * @returns {object} updated sellCoinInfo
        */
       getSocketOrdersBinance(sellCoinSymbol, (sellCoinOrders) => {
         const { bids, asks } = sellCoinOrders;
         const { sharesSellable, averageSellPrice, saleTotal } = calculateSellData({
           bids,
-          shares: SHARES_FOR_ORDER_UPDATES,
+          shares: SOCKET_VARIABLES.shares,
         });
 
-        saleProceeds = saleTotal;
+        SOCKET_VARIABLES.saleProceeds = saleTotal;
 
-        // Bids / asks format array = [ [price, quantity], [] ]
+        // Gets price from highest bid and lowest ask
         const bid = bids[0][0];
         const ask = asks[0][0];
 
@@ -354,22 +366,26 @@ io.on('connection', (socket) => {
           averageSellPrice,
           sharesSellable,
         };
-        // console.log(moment().format('LTS'));
-        // console.log('sellCoin: ', sellCoinInfo);
 
         io.sockets.emit('updateSellCoinInfo', sellCoinInfo);
       });
 
-      // COIN_2 INFO (coin being bought)
-      // Whenever buyCoin updated, uses saleTotal to calculate sharesToBuy
+      /**
+       * SOCKET - Subscribe to buyCoin order book updates
+       *  When buyCoin order book changes, uses last 'saleProceeds' to calculate amount buyable
+       *  Sends new buyCoin information to client
+       * @param {string} buyCoinSymbol
+       *
+       * @return {Object} updated buyCoinInfo
+       */
       getSocketOrdersBinance(buyCoinSymbol, (buyCoinOrders) => {
         const { bids, asks } = buyCoinOrders;
         const { amountSpent, sharesBuyable, averageBuyPrice } = calculateBuyData({
           asks,
-          buyAmount: saleProceeds,
+          buyAmount: SOCKET_VARIABLES.saleProceeds,
         });
 
-        // Bids / asks format array = [ [price, quantity], [] ]
+        // Gets price from highest bid and lowest ask
         const bid = bids[0][0];
         const ask = asks[0][0];
 
@@ -382,10 +398,8 @@ io.on('connection', (socket) => {
           amountBuyable: amountSpent,
         };
 
+        // Adjusts amount buyable based on coin's minStep
         const adjustedBuyInfo = adjustBuyCoin(buyCoinInfo);
-
-        // console.log(moment().format('LTS'));
-        // console.log('buyCoin: ', adjustedBuyInfo);
 
         io.sockets.emit('updateBuyCoinInfo', adjustedBuyInfo);
       });
@@ -395,12 +409,23 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Update user shares
+  /**
+   * SOCKET - Update shares entered
+   *  Updates SOCKET_VARIABLES.shares on server to match shareEntered on the client side
+   *  That way whenever an order book updates, it knows how many shares to use for the calculation
+   * @param {number} sharesEntered
+   */
   socket.on('sharesUpdated', (sharesEntered) => {
-    SHARES_FOR_ORDER_UPDATES = sharesEntered;
+    SOCKET_VARIABLES.shares = sharesEntered;
   });
 
-  // SUBSCRIBE TO TRADE INFO
+  /**
+   * SOCKET - Updates coins last prices based on trades
+   *  For baseCoin last prices, updates prices vs dollar - ex 'BTCUSDT'
+   * @param {Object} coins - Object containing {sellCoin: {market}, buyCoin, baseCoin}
+   *
+   * @return {Object} tradeInfo - Emits object containing { market: , last: }
+   */
   socket.on('subscribeToTrades', (coins) => {
     // For each symbol, create new subscription to updates
     Object.entries(coins).forEach(([coin, coinInfo]) => {
@@ -419,6 +444,9 @@ io.on('connection', (socket) => {
     });
   });
 
+  /**
+   * SOCKET - Closes all existing sockets
+   */
   socket.on('terminatePriorSockets', () => {
     const endpoints = binance.websockets.subscriptions();
     for (const endpoint in endpoints) {

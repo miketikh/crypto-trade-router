@@ -3,6 +3,8 @@ const Promise = require('bluebird');
 const binance = Promise.promisifyAll(require('node-binance-api'));
 const { splitMarketSymbol } = require('../utils/helpers');
 
+// ********** CONFIGURE BINANCE *********** /
+
 binance.options({
   APIKEY: process.env.BINANCE_API_KEY,
   APISECRET: process.env.BINANCE_API_SECRET,
@@ -12,63 +14,15 @@ binance.options({
   reconnect: false,
 });
 
-// GET PRICE FOR COIN
+/**
+ * Gets price for a market
+ * @param {string} symbol - Coin market like 'BTCETH'
+ *
+ * @return {number} Price (float)
+ */
 const getPriceBinance = async (symbol) => {
   const priceObj = await binance.pricesAsync(symbol);
   return parseFloat(priceObj[symbol]);
-};
-
-// GET INITIAL PRICES
-// Returns object with prices for sellCoin, buyCoin, and baseCoin if not USDT
-const getPricesBinance = async ([sellCoinSymbol, buyCoinSymbol, baseCoinSymbol]) => {
-  const sellCoinPrice = await binance.pricesAsync(sellCoinSymbol);
-  const buyCoinPrice = await binance.pricesAsync(buyCoinSymbol);
-  // No symbol given if USDT used
-  const baseCoinPrice = baseCoinSymbol ? await binance.pricesAsync(baseCoinSymbol) : {};
-
-  return { ...sellCoinPrice, ...buyCoinPrice, ...baseCoinPrice };
-};
-
-// Formats bids / asks from book ticker (1 time fetch)
-const formatBookTicker = (bidAsk) => {
-  const {
-    symbol, bidPrice, bidQty, askPrice, askQty,
-  } = bidAsk;
-
-  return {
-    [symbol]: {
-      bid: parseFloat(bidPrice),
-      ask: parseFloat(askPrice),
-    },
-  };
-};
-
-// Formats bid/ask Object received from binance into ordered array of objects
-// TODO: expensive operation? Maybe cut?
-const formatBinanceOrder = (orders) => {
-  const formattedOrders = [];
-
-  orders.forEach(([price, quantity]) => {
-    const order = {
-      price,
-      quantity,
-      total: price * quantity,
-    };
-    formattedOrders.push(order);
-  });
-
-  return formattedOrders;
-};
-
-// GET INITIAL BIDS / ASKS
-const getBidAskBinance = async ([sellCoinSymbol, buyCoinSymbol]) => {
-  const sellCoinBidAsk = await binance.bookTickersAsync(sellCoinSymbol);
-  const buyCoinBidAsk = await binance.bookTickersAsync(buyCoinSymbol);
-
-  const sellCoinBidAskFormatted = formatBookTicker(sellCoinBidAsk);
-  const buyCoinBidAskFormatted = formatBookTicker(buyCoinBidAsk);
-
-  return { ...sellCoinBidAskFormatted, ...buyCoinBidAskFormatted };
 };
 
 // GET ORDERS

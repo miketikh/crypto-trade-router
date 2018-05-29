@@ -1,6 +1,7 @@
 require('dotenv').config();
 const Promise = require('bluebird');
 const binance = Promise.promisifyAll(require('node-binance-api'));
+const { splitMarketSymbol } = require('../utils/helpers');
 
 binance.options({
   APIKEY: process.env.BINANCE_API_KEY,
@@ -10,19 +11,6 @@ binance.options({
   verbose: true,
   reconnect: false,
 });
-
-/**
- * Takes Binance market symbol, splits into two coins being traded
- *
- * @param {string} symbol = Binance market symbol, ex: 'BTCETH'
- * @return {array} coins = Two coins from symbol, the tradeCoin and its baseCoin
- */
-const splitBinanceSymbol = (symbol) => {
-  const baseCurrencies = /(\w+)((USDT)|(ETH)|(BTC)|(BNB))$/g;
-  const [fullSymbol, tradeCoin, baseCoin] = baseCurrencies.exec(symbol);
-
-  return [tradeCoin, baseCoin];
-};
 
 // GET PRICE FOR COIN
 const getPriceBinance = async (symbol) => {
@@ -113,7 +101,7 @@ const getPairsBinance = async () => {
     const pairs = [];
 
     Object.entries(ticker).forEach(([symbol]) => {
-      const [tradeCoin, baseCoin] = splitBinanceSymbol(symbol);
+      const [tradeCoin, baseCoin] = splitMarketSymbol(symbol);
 
       pairs.push([tradeCoin, baseCoin]);
     });
@@ -149,74 +137,6 @@ const aggregateFilledTradesBinance = (fills) => {
     commission,
   };
 };
-
-// // USER DATA TRADE UPDATE - Check why not working!
-// // The only time the user data (account balances) and order execution websockets will fire, is if you create or cancel an order, or an order gets filled or partially filled
-// function balance_update(data) {
-//   console.log('Balance Update');
-//   for (let obj of data.B) {
-//     let { a: asset, f: available, l: onOrder } = obj;
-//     if (available == '0.00000000') continue;
-//     console.log(
-//       asset + '\tavailable: ' + available + ' (' + onOrder + ' on order)'
-//     );
-//   }
-// }
-
-// function execution_update(data) {
-//   console.log('execution update');
-//   let {
-//     x: executionType,
-//     s: symbol,
-//     p: price,
-//     q: quantity,
-//     S: side,
-//     o: orderType,
-//     i: orderId,
-//     X: orderStatus
-//   } = data;
-//   if (executionType == 'NEW') {
-//     if (orderStatus == 'REJECTED') {
-//       console.log('Order Failed! Reason: ' + data.r);
-//     }
-//     console.log(
-//       symbol +
-//         ' ' +
-//         side +
-//         ' ' +
-//         orderType +
-//         ' ORDER #' +
-//         orderId +
-//         ' (' +
-//         orderStatus +
-//         ')'
-//     );
-//     console.log('..price: ' + price + ', quantity: ' + quantity);
-//     return;
-//   }
-//   //NEW, CANCELED, REPLACED, REJECTED, TRADE, EXPIRED
-//   console.log(
-//     symbol +
-//       '\t' +
-//       side +
-//       ' ' +
-//       executionType +
-//       ' ' +
-//       orderType +
-//       ' ORDER #' +
-//       orderId
-//   );
-// }
-
-// binance.websockets.userData(balance_update, execution_update);
-
-// binance.balance((err, balances) => {
-//   Object.entries(balances).forEach(([symbol, balance]) => {
-//     if (balance.available !== '0.00000000') {
-//       console.log(`${symbol}: ${balance.available}`);
-//     }
-//   });
-// });
 
 /**
  * Returns minimum steps for coins using the sellCoinMarket and buyCoinMarket

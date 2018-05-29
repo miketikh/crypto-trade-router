@@ -273,8 +273,7 @@ app.post('/trade', async (req, res) => {
     res.send(trade);
     res.end();
   } catch (err) {
-    console.log('error trading!');
-    console.log(err.body);
+    console.log('error trading: ', err.body);
     res.status(404).end(err);
   }
 });

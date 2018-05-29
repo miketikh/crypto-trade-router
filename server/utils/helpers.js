@@ -14,6 +14,19 @@ const numberToFixed = (number, precision, base) => {
 };
 
 /**
+ * Splits market symbol into two coins
+ * @param {string} symbol = Market symbol, ex: 'BTCETH'
+ *
+ * @return {array} coins = Two coins from symbol, the tradeCoin and its baseCoin
+ */
+const splitMarketSymbol = (symbol) => {
+  const baseCurrencies = /(\w+)((USDT)|(ETH)|(BTC)|(BNB))$/g;
+  const [fullSymbol, tradeCoin, baseCoin] = baseCurrencies.exec(symbol);
+
+  return [tradeCoin, baseCoin];
+};
+
+/**
  * Adjusts sharesBuyable based on the coin's minStep (minimum trading size)
  *  Tells you leftover amount (isn't possible to purchase) in baseCoin
  *  ex: If 1.58 shares buyable, but minStep is 1, you can only buy 1 share and .58 shares will be 'leftover'
@@ -160,6 +173,7 @@ const calculateUSDSavings = async ({ bestRoute }) => {
 
 module.exports = {
   numberToFixed,
+  splitMarketSymbol,
   adjustBuyCoin,
   calculateSellData,
   calculateBuyData,

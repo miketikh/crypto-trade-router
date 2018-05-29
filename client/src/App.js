@@ -1,6 +1,4 @@
 import React, { Component } from 'react';
-import _ from 'underscore';
-import axios from 'axios';
 import socket from './sockets/websocket';
 import OrderForm from './components/OrderForm/OrderForm';
 import CoinSelections from './components/CoinSelections/CoinSelections';
@@ -246,7 +244,7 @@ class App extends Component {
   }
 
   /**
-   * Updates coin available balances
+   * AJAX Handler - Updates coin available balances
    * @param {Object} coinNames - Strings with sellCoinName and/or buyCoinName
    *
    * @return {void} - Sets balance in state for sellCoin, buyCoin, or both
@@ -319,7 +317,7 @@ class App extends Component {
   }
 
   /**
-   * SellCoin select handler
+   * Select Handler - Sell Coin
    *  1. Closes socket connections
    *  2. Gathers coins connected to sellCoin
    *  3. Sets balance of buyCoin
@@ -350,7 +348,7 @@ class App extends Component {
   };
 
   /**
-   * BuyCoin Select Handler
+   * Select Handler - Buy Coin
    *  1. Closes socket connections
    *  2. Gather bridgeCoins
    *  3. Set buyCoin balances
@@ -389,7 +387,8 @@ class App extends Component {
   };
 
   /**
-   * Handles manual selection of new baseCoin
+   * Select Handler - Base Coin
+   *  (Used if smartRouting disabled)
    *   1. Gets sellCoin, buyCoin from state
    *   2. Adds market to objects based on new baseCoin: 'ETCBTH'
    *   3. Adds minSteps to coins
@@ -427,28 +426,38 @@ class App extends Component {
     });
   };
 
-  // INPUT CHANGE (SHARES)
+  /**
+   * Input Handler - Shares to Sell
+   *  1. Vaildity check
+   *    a. Make sure buyCoin and sellCoin selected
+   *    b. Either baseCoin selected or smartRouting enabled
+   *    c. Input must be number
+   *  2. If shares blank (input is delete), set shares to 0
+   *  3. Set to maximum precision allowed, based on MinStep (minimum trading size)
+   *  4. Update sharecount
+   *    a. Update in state
+   *    b. Update in server
+   *  5. Recalculate route, if smartRouting enabled
+   * 
+   * @param {Object} event - Event containing shares input
+   */
   handleInputChange = (e) => {
     const {
       sellCoin, buyCoin, baseCoin, bridgeCoins, smartRouting,
     } = this.state;
-    const { minStep } = sellCoin;
     const sharesEntered = e.target.value;
 
-    // No change if not enough coins defined, or input is not a number
-    if (
-      !(sellCoin.name && buyCoin.name && (baseCoin.name || smartRouting)) ||
+    if (!(sellCoin.name && buyCoin.name && (baseCoin.name || smartRouting)) ||
       isNaN(sharesEntered)
     ) {
       return;
     }
 
-    // Parse input for number, if blank set to 0
     let sharesNumber = parseFloat(sharesEntered);
+    // Handles case where input is blank
     if (isNaN(sharesNumber)) sharesNumber = 0;
 
-    // Sets sharesNumber to maximum precision allowed
-    const maxPrecision = findPrecision(minStep);
+    const maxPrecision = findPrecision(sellCoin.minStep);
     sharesNumber = sharesNumber.toFixed(maxPrecision);
 
     socket.emit('sharesUpdated', sharesNumber);
@@ -456,7 +465,6 @@ class App extends Component {
       sharesEntered: sharesNumber,
     });
 
-    // Recalculates best route when shares changed, if enabled
     if (smartRouting) {
       getBestRoute({
         sellCoin,
@@ -467,7 +475,19 @@ class App extends Component {
     }
   };
 
-  // SUBMIT TRADE HANDLER
+  /**
+   * Submit trade, create and post trade log
+   *  Submit Trade
+   *    If trade successful:
+   *      If smartRouting:
+   *        Creates tradeLog detailing savings from smartRoute
+   *      If manualRouting:
+   *        Creates regular tradelog showing trade
+   *      Posts tradeLog to page, updates coin balances
+   *    If trade failed:
+   *      Logs error message
+   *      Update Coin balances (since it may have completed one leg)
+   */
   handleTradeSubmit = async () => {
     const {
       sellCoin, buyCoin, sharesEntered, bridgeCoins, smartRouting, baseCoin,
@@ -512,7 +532,7 @@ class App extends Component {
       });
     } catch (err) {
       console.log('Error occurred submitting trade: ', err);
-      // Even if error occurs, may need to update one balance
+      // Even if error occurs, may need to update balance on one side
       this.updateCoinBalances({
         sellCoinName: sellCoin.name,
         buyCoinName: buyCoin.name,

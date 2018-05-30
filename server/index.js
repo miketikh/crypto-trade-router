@@ -15,6 +15,7 @@ const {
   sellMarketBinance,
   getMinStepsBinance,
   aggregateFilledTradesBinance,
+  calculateUSDSavings,
 } = require('./binance/binance');
 const { getBestRoute } = require('./binance/bestRoute');
 const {
@@ -22,7 +23,6 @@ const {
   adjustBuyCoin,
   calculateSellData,
   calculateBuyData,
-  calculateUSDSavings,
 } = require('./utils/helpers');
 
 // ****** Begin Server ******** //
@@ -194,8 +194,6 @@ app.post('/trade', async (req, res) => {
     // Sell sellCoin
     const sellRes = await sellMarketBinance(sellCoinSymbol, shares, flags);
 
-    console.log(sellRes);
-
     // Sum up sale info to find purchase amount
 
     // a. Aggregates sell fills to get average price, total qty, and total commission
@@ -234,23 +232,21 @@ app.post('/trade', async (req, res) => {
 
     // Calculate trade savings, if smartRouting used
     let savings;
-    console.log('calculating savings');
 
-    // if (smartRouting) {
-    //   console.log('calculat USD Sacings');
-    //   const USDSavings = await calculateUSDSavings({ bestRoute });
-    //   console.log('calculated: ', USDSavings);
-    //   const totalUSDSavings = numberToFixed(USDSavings * buyQuantity, 4);
-    //   console.log('total: ', totalUSDSavings);
-    //   savings = {
-    //     USDSavings,
-    //     totalUSDSavings,
-    //     bestBaseCoin: bestRoute.baseCoin.name,
-    //     worstBaseCoin: bestRoute.worstRoute.baseCoin,
-    //   };
-    // }
-
-    console.log('savings calculated');
+    if (smartRouting) {
+      try {
+        const USDSavings = await calculateUSDSavings({ bestRoute });
+        const totalUSDSavings = numberToFixed(USDSavings * buyQuantity, 4);
+        savings = {
+          USDSavings,
+          totalUSDSavings,
+          bestBaseCoin: bestRoute.baseCoin.name,
+          worstBaseCoin: bestRoute.worstRoute.baseCoin,
+        };
+      } catch (err) {
+        console.log('cannot calculate savings: ', err);
+      }
+    }
 
     // Creates Sale and Purchase objects with trade information
     const sale = {

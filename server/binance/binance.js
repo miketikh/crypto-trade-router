@@ -1,7 +1,7 @@
 require('dotenv').config();
 const Promise = require('bluebird');
 const binance = Promise.promisifyAll(require('node-binance-api'));
-const { splitMarketSymbol } = require('../utils/helpers');
+const { splitMarketSymbol, numberToFixed } = require('../utils/helpers');
 
 // ********** CONFIGURE BINANCE *********** /
 
@@ -159,6 +159,31 @@ const getMinStepsBinance = async ({ sellCoinMarket, buyCoinMarket }) => {
   }
 };
 
+/**
+ * Converts savings in bestRoute into a USD amount
+ *  // NOTE: Uses Binance API for prices
+ * @param {Object} bestRoute object, also containing worstRoute info
+ *
+ * @return {number} Amount saved from the smartRouter
+ */
+const calculateUSDSavings = async ({ bestRoute }) => {
+  const { worstRoute } = bestRoute;
+  const bestBaseCoin = bestRoute.baseCoin.name;
+  const worstBaseCoin = worstRoute.baseCoin;
+  const bestSpread = bestRoute.sellCoin.averageSellPrice - bestRoute.buyCoin.averageBuyPrice;
+  const worstSpread = worstRoute.averageSellPrice - worstRoute.averageBuyPrice;
+  const bestBaseCoinSymbol = `${bestBaseCoin}USDT`;
+  const worstBaseCoinSymbol = `${worstBaseCoin}USDT`;
+
+  const bestCoinPriceUSD = await getPriceBinance(bestBaseCoinSymbol);
+  const worstCoinPriceUSD = await getPriceBinance(worstBaseCoinSymbol);
+
+  const bestSpreadUSD = bestSpread * bestCoinPriceUSD;
+  const worstSpreadUSD = worstSpread * worstCoinPriceUSD;
+
+  return numberToFixed(bestSpreadUSD - worstSpreadUSD, 4);
+};
+
 module.exports = {
   binance,
   getPairsBinance,
@@ -169,4 +194,5 @@ module.exports = {
   sellMarketBinance: binance.marketSellAsync,
   getMinStepsBinance,
   aggregateFilledTradesBinance,
+  calculateUSDSavings,
 };

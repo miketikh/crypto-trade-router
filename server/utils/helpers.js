@@ -161,12 +161,17 @@ const calculateUSDSavings = async ({ bestRoute }) => {
   const bestBaseCoinSymbol = `${bestBaseCoin}USDT`;
   const worstBaseCoinSymbol = `${worstBaseCoin}USDT`;
 
-  const bestCoinPriceUSD = bestBaseCoin === 'USDT' ? 1 : await getPriceBinance(bestBaseCoinSymbol);
-  const worstCoinPriceUSD =
-    worstBaseCoin === 'USDT' ? 1 : await getPriceBinance(worstBaseCoinSymbol);
+  console.log(`bestSpread: ${bestSpread}, worstSpread: ${worstSpread}, bestBaseCoinSYmbol: ${typeof bestBaseCoinSymbol}, worstBaseCoinSYmbol: ${typeof worstBaseCoinSymbol}`);
+  console.log(`bestBase: ${bestBaseCoin}, worstBase: ${worstBaseCoin}`);
+  const bestCoinPriceUSD = await getPriceBinance(bestBaseCoinSymbol);
+  const worstCoinPriceUSD = await getPriceBinance(worstBaseCoinSymbol);
+
+  console.log(`best price: ${bestCoinPriceUSD}, worst: ${worstCoinPriceUSD}`);
 
   const bestSpreadUSD = bestSpread * bestCoinPriceUSD;
   const worstSpreadUSD = worstSpread * worstCoinPriceUSD;
+  console.log('bestSpreadUSD: ', bestSpreadUSD);
+  console.log('worstSpreadUSD: ', worstSpreadUSD);
 
   return numberToFixed(bestSpreadUSD - worstSpreadUSD, 4);
 };

@@ -29,6 +29,7 @@ const {
 
 const app = express();
 const server = http.createServer(app);
+const io = socketIO(server, { transport: ['websocket'] });
 
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -193,6 +194,8 @@ app.post('/trade', async (req, res) => {
     // Sell sellCoin
     const sellRes = await sellMarketBinance(sellCoinSymbol, shares, flags);
 
+    console.log(sellRes);
+
     // Sum up sale info to find purchase amount
 
     // a. Aggregates sell fills to get average price, total qty, and total commission
@@ -231,17 +234,23 @@ app.post('/trade', async (req, res) => {
 
     // Calculate trade savings, if smartRouting used
     let savings;
+    console.log('calculating savings');
 
-    if (smartRouting) {
-      const USDSavings = await calculateUSDSavings({ bestRoute });
-      const totalUSDSavings = numberToFixed(USDSavings * buyQuantity, 4);
-      savings = {
-        USDSavings,
-        totalUSDSavings,
-        bestBaseCoin: bestRoute.baseCoin.name,
-        worstBaseCoin: bestRoute.worstRoute.baseCoin,
-      };
-    }
+    // if (smartRouting) {
+    //   console.log('calculat USD Sacings');
+    //   const USDSavings = await calculateUSDSavings({ bestRoute });
+    //   console.log('calculated: ', USDSavings);
+    //   const totalUSDSavings = numberToFixed(USDSavings * buyQuantity, 4);
+    //   console.log('total: ', totalUSDSavings);
+    //   savings = {
+    //     USDSavings,
+    //     totalUSDSavings,
+    //     bestBaseCoin: bestRoute.baseCoin.name,
+    //     worstBaseCoin: bestRoute.worstRoute.baseCoin,
+    //   };
+    // }
+
+    console.log('savings calculated');
 
     // Creates Sale and Purchase objects with trade information
     const sale = {

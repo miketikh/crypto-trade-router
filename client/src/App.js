@@ -503,7 +503,7 @@ class App extends Component {
       });
       let tradeLogEntry;
       // Log the trade savings, if smartRouting used
-      if (smartRouting) {
+      if (smartRouting && tradeRes.savings) {
         tradeLogEntry = (
           <LogEntry
             sellCoin={sellCoin}

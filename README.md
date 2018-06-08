@@ -8,7 +8,7 @@ Currently on exchanges you have to trade an **alt coin** against a **base coin.*
 
 **What happens if you want to trade two alt coins against each other?**
 
-For example: What if you're holding trade coin A, bad news comes out, and you want to buy coin B instead? This is a scenario that happens frequently for crypto day traders.
+For example: What if you're holding trade coin A, big news comes out, and you want to quickly buy coin B instead? This is a scenario that happens frequently for crypto day traders.
 
 Currently you would have to:
 
@@ -20,7 +20,7 @@ Currently you would have to:
 
 This process is **horribly inefficient** for a number of reasons!
 
-1.  **Time:** Buy the time you find a connection, sell a coin, and buy the next one, the prices may have changed. Especially if news came out.
+1.  **Time:** By the time you find a connection, sell a coin, and buy the next one, the prices may have changed. Especially if news came out.
 2.  **Efficiency:** What if there are many possible base coins? For example, **NEO** and **LTC** both trade against **BTC, ETH, BNB, and USDT.** Each one has different prices and amounts you can trade! How do you determine the best route?
 
 ### The Solution:
